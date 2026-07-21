@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — the sparkline</title>
+<style>
+  :root{
+    --is-bg:#221f26;
+    --is-text:#b8b2bc;
+    --is-head:#e8e4ea;
+    --cb-bg:#fdf9f3;
+    --cb-ink:#2a2430;
+    --cb-sub:#6d6572;
+    --coral:#e05c3e;
+    --coral-dim:#b04a33;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Avenir Next",Avenir,Futura,"Century Gothic","Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:#141217;color:var(--cb-ink);overflow:hidden;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;position:relative;flex:none}
+
+  .slide{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:90px 150px 150px;
+    opacity:0;visibility:hidden;
+    transition:opacity .35s ease,visibility 0s .35s;
+  }
+  .slide.active{opacity:1;visibility:visible;transition:opacity .35s ease}
+  @media (prefers-reduced-motion:reduce){.slide{transition:none}}
+
+  .slide.is{background:var(--is-bg);color:var(--is-text)}
+  .slide.cb{background:var(--cb-bg);color:var(--cb-ink)}
+
+  .state{font-size:14px;letter-spacing:.32em;text-transform:uppercase;font-weight:600;margin-bottom:34px}
+  .is .state{color:#7d7684}
+  .cb .state{color:var(--coral)}
+  .state::before{content:"";display:inline-block;width:34px;height:2px;vertical-align:middle;margin-right:14px}
+  .is .state::before{background:#7d7684;height:2px}
+  .cb .state::before{background:var(--coral)}
+
+  h1{font-size:66px;line-height:1.14;font-weight:600;letter-spacing:-.012em;max-width:1150px}
+  .is h1{color:var(--is-head);font-weight:500}
+  .cb h1 em{font-style:normal;color:var(--coral)}
+  .sub{font-size:20px;line-height:1.6;margin-top:26px;max-width:860px}
+  .is .sub{color:#8f8996}
+  .cb .sub{color:var(--cb-sub)}
+
+  .chips{display:flex;gap:12px;margin-top:38px;flex-wrap:wrap}
+  .chip{font-size:13.5px;font-weight:600;letter-spacing:.04em;padding:9px 16px;border-radius:999px}
+  .is .chip{border:1px solid #4a444f;color:#a49daa}
+  .cb .chip{border:1px solid #e5d9c8;background:#fff;color:var(--cb-ink)}
+  .cb .chip.hot{background:var(--coral);border-color:var(--coral);color:#fff}
+
+  /* sparkline footer */
+  .spark{position:absolute;left:150px;right:150px;bottom:56px;height:64px}
+  .spark svg{width:100%;height:100%;overflow:visible}
+  .spark .lab{position:absolute;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+  .spark .lab.top{top:-8px;left:0}
+  .spark .lab.bot{bottom:-8px;left:0}
+  .is .spark .lab{color:#5c5563}
+  .cb .spark .lab{color:#c2b8a9}
+  .is .spark polyline{stroke:#4a444f}
+  .cb .spark polyline{stroke:#e0d5c3}
+  .spark polyline{fill:none;stroke-width:2}
+  .spark .dot{fill:var(--coral)}
+  .pg{position:absolute;bottom:24px;right:34px;font-size:11.5px;letter-spacing:.14em;font-weight:600}
+  .is .pg{color:#544e5a}
+  .cb .pg{color:#c8bfae}
+  .hint{position:fixed;bottom:8px;left:0;right:0;text-align:center;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#3c3742}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1 · call to adventure -->
+<section class="slide cb" data-state="1">
+  <div class="state">The journey</div>
+  <h1>From messy workflow to <em>trusted production system</em>.</h1>
+  <p class="sub">The forward deployed engineering playbook, told the way change actually happens: what is — and what could be.</p>
+</section>
+
+<!-- 2 -->
+<section class="slide is" data-state="0">
+  <div class="state">What is</div>
+  <h1>Everyone owns the same intelligence.</h1>
+  <p class="sub">Every frontier model, on tap, for anyone who pays. Fifty enterprises, one identical stack. Whatever advantage intelligence conferred is already gone.</p>
+</section>
+
+<!-- 3 -->
+<section class="slide cb" data-state="1">
+  <div class="state">What could be</div>
+  <h1>The edge moves to <em>deployment</em>.</h1>
+  <p class="sub">Where, how, and why intelligence is applied to this business, with its specific processes, systems, and exceptions — that is defensible.</p>
+</section>
+
+<!-- 4 -->
+<section class="slide is" data-state="0">
+  <div class="state">What is</div>
+  <h1>95% of AI pilots fail.</h1>
+  <p class="sub">Token maxing: give everything to the model and hope. Ten-million-dollar budgets burned in a quarter without moving the needle.</p>
+</section>
+
+<!-- 5 -->
+<section class="slide cb" data-state="1">
+  <div class="state">What could be</div>
+  <h1>One person bridges business and machine: <em>the FDE</em>.</h1>
+  <p class="sub">The best combination of consultant and engineer — not the average. Business reality → judgment → deployed system.</p>
+  <div class="chips"><span class="chip">workflows &amp; incentives</span><span class="chip">models &amp; systems</span><span class="chip hot">judgment at the bridge</span></div>
+</section>
+
+<!-- 6 -->
+<section class="slide is" data-state="0">
+  <div class="state">What is</div>
+  <h1>The documented process is fiction.</h1>
+  <p class="sub">"An email arrives" — from 40 senders, no two alike. Four spreadsheets, one quietly wrong. An internal system with no API, and the routing rules living in one person's head.</p>
+</section>
+
+<!-- 7 -->
+<section class="slide cb" data-state="1">
+  <div class="state">What could be</div>
+  <h1>Discovery that maps <em>reality</em>.</h1>
+  <p class="sub">Shadow the work for full days. Read the real artifacts. Sit with every owner of the process. The exceptions become the spec.</p>
+</section>
+
+<!-- 8 -->
+<section class="slide is" data-state="0">
+  <div class="state">What is</div>
+  <h1>AI slapped everywhere, understood nowhere.</h1>
+  <p class="sub">Every workflow gets a model whether it needs one or not. Risky steps automated, trivial steps over-engineered, ROI never asked.</p>
+</section>
+
+<!-- 9 -->
+<section class="slide cb" data-state="1">
+  <div class="state">What could be</div>
+  <h1>An audit that ends in <em>one operating map</em>.</h1>
+  <p class="sub">Current state, future state, one use case chosen for value, explicit boundaries — and the expected value quantified in revenue, risk, and cost.</p>
+  <div class="chips"><span class="chip">deterministic → software</span><span class="chip">judgment → agent</span><span class="chip">consequences → human</span></div>
+</section>
+
+<!-- 10 -->
+<section class="slide is" data-state="0">
+  <div class="state">What is</div>
+  <h1>Happy-path demos.</h1>
+  <p class="sub">Impressive on stage, dead in production. One way to go right gets built; the thousand ways to go wrong get discovered by the client.</p>
+</section>
+
+<!-- 11 -->
+<section class="slide cb" data-state="1">
+  <div class="state">What could be</div>
+  <h1>Systems built for the <em>unhappy paths</em>.</h1>
+  <p class="sub">Guardrails, structured outputs, checkpoints, resume-after-failure, retries with backoff — and an audit trail of every step, because no traces means no trust.</p>
+</section>
+
+<!-- 12 -->
+<section class="slide is" data-state="0">
+  <div class="state">What is</div>
+  <h1>"It seems to work."</h1>
+  <p class="sub">Confidence by anecdote. Nobody can say what the system gets wrong, how often, or what happens when it does.</p>
+</section>
+
+<!-- 13 -->
+<section class="slide cb" data-state="1">
+  <div class="state">What could be</div>
+  <h1><em>Evidence</em>: a graded golden dataset.</h1>
+  <p class="sub">41 of 50 runs pass — and the nine failures are categorized, investigated, and fed back. Below 0.80 confidence, escalate. High-risk actions always reach a person.</p>
+</section>
+
+<!-- 14 -->
+<section class="slide is" data-state="0">
+  <div class="state">What is</div>
+  <h1>"First, migrate off your ERP."</h1>
+  <p class="sub">The pitch that kills the project. Years and millions invested in the current stack, and the AI vendor's opening move is to throw it away.</p>
+</section>
+
+<!-- 15 -->
+<section class="slide cb" data-state="1">
+  <div class="state">What could be</div>
+  <h1><em>Integrate</em>, sandbox, earn autonomy.</h1>
+  <p class="sub">Build on top of what exists. Test inside their walls. Shadow mode, then human approval, then autonomy — each step earned by evidence.</p>
+</section>
+
+<!-- 16 -->
+<section class="slide is" data-state="0">
+  <div class="state">What is</div>
+  <h1>To your sponsor, you are a risk.</h1>
+  <p class="sub">The status quo is safe. Bringing you in is not — if it fails, it's their name attached. Fear, not technology, is what stalls adoption.</p>
+</section>
+
+<!-- 17 -->
+<section class="slide cb" data-state="1">
+  <div class="state">What could be</div>
+  <h1>Your job is to get them <em>promoted</em>.</h1>
+  <p class="sub">Visible traces, approval gates, measurable checkpoints — then attributable value in the three buckets, delivered face to face. The relationship is infrastructure.</p>
+</section>
+
+<!-- 18 · new bliss -->
+<section class="slide cb" data-state="1">
+  <div class="state">New bliss</div>
+  <h1>The loop runs again — and you <em>own the path</em>.</h1>
+  <p class="sub">Audit → build → evals → deploy → observe → improve. Each stage earns the right to the next. One workflow becomes the whole business.</p>
+  <div class="chips"><span class="chip hot">audit</span><span class="chip">build</span><span class="chip hot">evals</span><span class="chip hot">deploy</span><span class="chip">observe</span><span class="chip">improve</span></div>
+</section>
+
+</div></div>
+<div class="hint">← → navigate · click to advance</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const states=slides.map(s=>+s.dataset.state);
+  // build the sparkline footer into every slide
+  const W=1300,H=40,step=W/(states.length-1);
+  slides.forEach((s,idx)=>{
+    const pts=states.map((v,k)=>{
+      const x=k*step, y=v? 4 : H-4;
+      const px=(k? (k*step-step*0.5)+', '+(states[k-1]? 4 : H-4)+' ' : '');
+      return px+x+','+y;
+    }).join(' ');
+    const cx=idx*step, cy=states[idx]? 4 : H-4;
+    const d=document.createElement('div');
+    d.className='spark';
+    d.innerHTML='<span class="lab top">What could be</span><span class="lab bot">What is</span>'+
+      '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+      '<polyline points="'+pts+'"/>'+
+      '<circle class="dot" cx="'+cx+'" cy="'+cy+'" r="6"/></svg>'+
+      '<span class="pg">'+(idx+1)+' / '+slides.length+'</span>';
+    s.appendChild(d);
+  });
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>

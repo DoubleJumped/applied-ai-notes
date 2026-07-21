@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — keynote</title>
+<style>
+  :root{
+    --text:#f5f6f7;
+    --dim:#9aa1ab;
+    --faint:#565d68;
+    --glow:#7ab8ff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:#05070a;
+    color:var(--text);
+    overflow:hidden;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;position:relative;flex:none}
+
+  .slide{
+    position:absolute;inset:0;
+    background:radial-gradient(120% 90% at 50% 8%, #1c2129 0%, #10141a 45%, #05070a 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:80px 140px;
+    opacity:0;visibility:hidden;
+    transition:opacity .45s ease,visibility 0s .45s;
+  }
+  .slide.active{opacity:1;visibility:visible;transition:opacity .45s ease}
+  @media (prefers-reduced-motion:reduce){.slide{transition:none}}
+
+  h1{font-size:96px;line-height:1.08;font-weight:700;letter-spacing:-.022em;max-width:1240px;text-shadow:0 0 80px rgba(122,184,255,.14)}
+  h1 .glow{color:var(--glow)}
+  .sub{font-size:24px;line-height:1.5;color:var(--dim);margin-top:34px;max-width:880px;font-weight:400}
+  .kicker{font-size:15px;letter-spacing:.34em;text-transform:uppercase;color:var(--faint);margin-bottom:40px;font-weight:600}
+
+  .giant{font-size:340px;line-height:1;font-weight:700;letter-spacing:-.04em;text-shadow:0 0 120px rgba(122,184,255,.22)}
+  .giant .glow{color:var(--glow)}
+  .giant-label{font-size:26px;color:var(--dim);margin-top:26px}
+
+  .flow{display:flex;align-items:center;gap:26px;margin-top:52px;font-size:24px;color:var(--dim)}
+  .flow .sep{color:var(--faint)}
+  .flow b{color:var(--text);font-weight:600}
+
+  .pg{position:absolute;bottom:26px;right:34px;font-size:12px;letter-spacing:.2em;color:#2e343d}
+  .hint{position:fixed;bottom:9px;left:0;right:0;text-align:center;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#252a31}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<section class="slide">
+  <div class="kicker">An end-to-end playbook</div>
+  <h1>Forward Deployed<br>Engineering<span class="glow">.</span></h1>
+  <p class="sub">How intelligence enters a business.</p>
+  <span class="pg">1 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Every company can now<br>buy intelligence.</h1>
+  <p class="sub">The same models. The same stack. Available to anyone who pays.</p>
+  <span class="pg">2 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Intelligence is<br><span class="glow">not the moat.</span></h1>
+  <p class="sub">The edge is where, how, and why you use it.</p>
+  <span class="pg">3 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Someone has to decide<br>where it belongs.</h1>
+  <span class="pg">4 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>That person is<br>the <span class="glow">FDE</span>.</h1>
+  <div class="flow"><b>business reality</b><span class="sep">→</span><b>judgment</b><span class="sep">→</span><b>deployed system</b></div>
+  <span class="pg">5 / 20</span>
+</section>
+
+<section class="slide">
+  <div class="giant"><span class="glow">95%</span></div>
+  <div class="giant-label">of AI pilots fail. They skipped the discovery.</div>
+  <span class="pg">6 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>The documented process<br>is a myth.</h1>
+  <p class="sub">"An email arrives" is 40 senders, four spreadsheets, and thirty unwritten rules in one person's head.</p>
+  <span class="pg">7 / 20</span>
+</section>
+
+<section class="slide">
+  <h1><span class="glow">Sit with the work.</span></h1>
+  <p class="sub">Shadow full days. Read the real artifacts. The exceptions are the spec.</p>
+  <span class="pg">8 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>The audit produces<br>one map.</h1>
+  <p class="sub">Current state · future state · one use case · boundaries · quantified value</p>
+  <span class="pg">9 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Automate the predictable.<br><span class="glow">Escalate the ambiguous.</span></h1>
+  <p class="sub">Deterministic software for rules. An agent for judgment. A human for consequences.</p>
+  <span class="pg">10 / 20</span>
+</section>
+
+<section class="slide">
+  <div class="giant">3</div>
+  <div class="giant-label">buckets a business measures: revenue · risk · cost</div>
+  <span class="pg">11 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Build for the<br><span class="glow">unhappy paths.</span></h1>
+  <p class="sub">One way to go right. A thousand ways to go wrong.</p>
+  <span class="pg">12 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>No traces,<br>no trust.</h1>
+  <p class="sub">Log every prompt, tool call, and error. The audit trail is the product.</p>
+  <span class="pg">13 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Turn non-determinism<br>into <span class="glow">evidence</span>.</h1>
+  <p class="sub">A golden dataset. Hand-labeled ideal outputs. Graded, not vibes.</p>
+  <span class="pg">14 / 20</span>
+</section>
+
+<section class="slide">
+  <div class="giant"><span class="glow">82%</span></div>
+  <div class="giant-label">41 of 50 runs passed. The other 9 are the roadmap.</div>
+  <span class="pg">15 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Autonomy is<br><span class="glow">earned.</span></h1>
+  <p class="sub">Shadow mode → human approves → autonomy where the evidence allows.</p>
+  <span class="pg">16 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Integrate.<br>Don't migrate.</h1>
+  <p class="sub">Build on top of the systems they already trust.</p>
+  <span class="pg">17 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Deployment is a<br><span class="glow">people</span> problem.</h1>
+  <p class="sub">De-risk your sponsor. Make the value attributable. The relationship is infrastructure.</p>
+  <span class="pg">18 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>The loop<br>runs again.</h1>
+  <div class="flow"><b>audit</b><span class="sep">→</span><b>build</b><span class="sep">→</span><b>evals</b><span class="sep">→</span><b>deploy</b><span class="sep">→</span><b>observe</b><span class="sep">→</span><b>improve</b><span class="sep">↻</span></div>
+  <span class="pg">19 / 20</span>
+</section>
+
+<section class="slide">
+  <h1>Own the path.</h1>
+  <p class="sub">From messy workflow to trusted production system.</p>
+  <span class="pg">20 / 20</span>
+</section>
+
+</div></div>
+<div class="hint">← → navigate · click to advance</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>

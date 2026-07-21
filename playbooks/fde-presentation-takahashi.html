@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — Takahashi method</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:#ffffff;color:#000;overflow:hidden;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;position:relative;flex:none}
+
+  .slide{
+    position:absolute;inset:0;background:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:60px 90px;
+    opacity:0;visibility:hidden;
+  }
+  .slide.active{opacity:1;visibility:visible}
+
+  h1{font-weight:800;letter-spacing:-.03em;line-height:.98;font-size:250px}
+  h1.s{font-size:180px}
+  h1.xs{font-size:125px}
+  .note{position:absolute;bottom:44px;left:0;right:0;font-size:15px;color:#8a8a8a}
+  .pg{position:absolute;top:34px;right:44px;font-size:13px;color:#c4c4c4;font-weight:600}
+  .inv{background:#000}
+  .inv h1{color:#fff}
+  .inv .note{color:#7a7a7a}
+  .inv .pg{color:#4a4a4a}
+  .hint{position:fixed;bottom:8px;left:0;right:0;text-align:center;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#c9c9c9}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<section class="slide inv"><h1 class="s">FDE.</h1><div class="note">Forward Deployed Engineering — the playbook, one thought at a time</div><span class="pg">1/40</span></section>
+<section class="slide"><h1 class="xs">INTELLIGENCE<br>IS CHEAP.</h1><div class="note">every company buys the same models, the same stack</div><span class="pg">2/40</span></section>
+<section class="slide"><h1 class="s">NOT<br>A MOAT.</h1><div class="note">if everyone has it, it can't be the edge</div><span class="pg">3/40</span></section>
+<section class="slide"><h1 class="xs">DEPLOYMENT<br>IS THE EDGE.</h1><div class="note">where, how, and why you use it</div><span class="pg">4/40</span></section>
+<section class="slide"><h1 class="xs">SOMEONE<br>DECIDES.</h1><div class="note">where intelligence belongs — and where it does not</div><span class="pg">5/40</span></section>
+<section class="slide inv"><h1 class="s">THE FDE.</h1><div class="note">business reality → judgment → deployed system</div><span class="pg">6/40</span></section>
+<section class="slide"><h1>95%</h1><div class="note">of AI pilots fail</div><span class="pg">7/40</span></section>
+<section class="slide"><h1 class="s">WHY?</h1><div class="note">token maxing — AI slapped everywhere, understood nowhere</div><span class="pg">8/40</span></section>
+<section class="slide"><h1 class="xs">NO<br>DISCOVERY.</h1><div class="note">they built for the documented process</div><span class="pg">9/40</span></section>
+<section class="slide"><h1 class="xs">THE DOC<br>IS FICTION.</h1><div class="note">"an email arrives" = 40 senders, 4 spreadsheets, 30 unwritten rules</div><span class="pg">10/40</span></section>
+<section class="slide inv"><h1 class="xs">SIT WITH<br>THE WORK.</h1><div class="note">shadow full days — not one-hour meetings</div><span class="pg">11/40</span></section>
+<section class="slide"><h1 class="xs">EXCEPTIONS<br>ARE THE SPEC.</h1><div class="note">one way right, a thousand ways wrong</div><span class="pg">12/40</span></section>
+<section class="slide"><h1 class="s">MAP IT.</h1><div class="note">the operating map — the audit's one artifact</div><span class="pg">13/40</span></section>
+<section class="slide"><h1 class="xs">ONE<br>USE CASE.</h1><div class="note">chosen for value · bounded · quantified</div><span class="pg">14/40</span></section>
+<section class="slide"><h1 class="xs">AUTOMATE THE<br>PREDICTABLE.</h1><div class="note">deterministic software for rules</div><span class="pg">15/40</span></section>
+<section class="slide"><h1 class="xs">AGENT FOR<br>JUDGMENT.</h1><div class="note">clear objective, varying path</div><span class="pg">16/40</span></section>
+<section class="slide"><h1 class="xs">HUMAN FOR<br>CONSEQUENCES.</h1><div class="note">ambiguity, accountability, irreversibility</div><span class="pg">17/40</span></section>
+<section class="slide inv"><h1 class="s">3 BUCKETS.</h1><div class="note">revenue · risk · cost — nothing else counts</div><span class="pg">18/40</span></section>
+<section class="slide"><h1 class="s">BUILD.</h1><div class="note">phase 3 — engineering the system</div><span class="pg">19/40</span></section>
+<section class="slide"><h1 class="xs">UNHAPPY<br>PATHS.</h1><div class="note">the thousand ways it goes wrong are the product</div><span class="pg">20/40</span></section>
+<section class="slide"><h1 class="s">LOG<br>EVERYTHING.</h1><div class="note">every prompt, tool call, result, error, timestamp</div><span class="pg">21/40</span></section>
+<section class="slide inv"><h1 class="xs">NO TRACES,<br>NO TRUST.</h1><div class="note">visible audit trails are why clients say yes</div><span class="pg">22/40</span></section>
+<section class="slide"><h1 class="xs">SCHEMA,<br>NOT PROSE.</h1><div class="note">structured outputs, validated on every response</div><span class="pg">23/40</span></section>
+<section class="slide"><h1 class="s">KILL IT.</h1><div class="note">it must resume from the last checkpoint</div><span class="pg">24/40</span></section>
+<section class="slide"><h1 class="xs">RETRY.<br>BACK OFF.</h1><div class="note">1s · 2s · 4s · 8s — then escalate</div><span class="pg">25/40</span></section>
+<section class="slide inv"><h1 class="s">EVALS.</h1><div class="note">phase 4 — turn non-determinism into evidence</div><span class="pg">26/40</span></section>
+<section class="slide"><h1 class="xs">GOLDEN<br>DATASET.</h1><div class="note">real cases, hand-labeled ideal outputs</div><span class="pg">27/40</span></section>
+<section class="slide"><h1>82%</h1><div class="note">41 of 50 graded runs passed</div><span class="pg">28/40</span></section>
+<section class="slide"><h1 class="xs">THE OTHER 9<br>ARE THE MAP.</h1><div class="note">categorize failures, feed them back</div><span class="pg">29/40</span></section>
+<section class="slide"><h1 class="xs">BELOW .80?<br>ESCALATE.</h1><div class="note">operating rules, not judgment calls</div><span class="pg">30/40</span></section>
+<section class="slide inv"><h1 class="s">DEPLOY.</h1><div class="note">phase 5 — make it work inside the business</div><span class="pg">31/40</span></section>
+<section class="slide"><h1 class="xs">INTEGRATE.<br>DON'T MIGRATE.</h1><div class="note">build on top of the ERP they already trust</div><span class="pg">32/40</span></section>
+<section class="slide"><h1 class="s">SANDBOX<br>FIRST.</h1><div class="note">run, inspect, debug — inside their walls</div><span class="pg">33/40</span></section>
+<section class="slide"><h1 class="xs">AUTONOMY<br>IS EARNED.</h1><div class="note">shadow → approve → autonomy where evidence allows</div><span class="pg">34/40</span></section>
+<section class="slide"><h1 class="xs">YOU ARE<br>THE RISK.</h1><div class="note">status quo is safe; sponsoring you is not</div><span class="pg">35/40</span></section>
+<section class="slide inv"><h1 class="xs">GET THEM<br>PROMOTED.</h1><div class="note">attributable value in the three buckets</div><span class="pg">36/40</span></section>
+<section class="slide"><h1 class="s">OBSERVE.</h1><div class="note">metrics, failure categories, cost per run</div><span class="pg">37/40</span></section>
+<section class="slide"><h1 class="s">IMPROVE.</h1><div class="note">failures feed the golden dataset</div><span class="pg">38/40</span></section>
+<section class="slide"><h1 class="s">LOOP.</h1><div class="note">one workflow exposes the next — 10x becomes 100x</div><span class="pg">39/40</span></section>
+<section class="slide inv"><h1 class="xs">OWN<br>THE PATH.</h1><div class="note">from messy workflow to trusted production system</div><span class="pg">40/40</span></section>
+
+</div></div>
+<div class="hint">← → navigate · click to advance · built for rapid delivery — ~15s per slide</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>
