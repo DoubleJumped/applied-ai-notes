@@ -1,1 +1,1 @@
-# AIRoadmap
+# applied-ai-notes
