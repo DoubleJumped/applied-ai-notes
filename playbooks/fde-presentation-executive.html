@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — executive brief</title>
+<style>
+  :root{
+    --paper:#ece7dc;
+    --card:#faf7f0;
+    --ink:#182036;
+    --navy:#16294d;
+    --sub:#5a5f6e;
+    --faint:#9a9686;
+    --hairline:#ddd6c6;
+    --gold:#a58a4d;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;position:relative;flex:none}
+
+  .slide{
+    position:absolute;inset:26px 30px;
+    background:var(--card);
+    border:1px solid var(--hairline);
+    box-shadow:0 20px 60px rgba(24,32,54,.10);
+    padding:74px 96px 60px;
+    opacity:0;visibility:hidden;transform:translateY(10px);
+    transition:opacity .28s ease,transform .28s ease,visibility 0s .28s;
+    display:flex;flex-direction:column;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .28s ease,transform .28s ease}
+  .slide.dark{background:var(--navy);color:#f3efe6;border-color:var(--navy)}
+  @media (prefers-reduced-motion:reduce){.slide{transition:none}}
+
+  .eyebrow{display:flex;align-items:center;gap:16px;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:26px}
+  .eyebrow::after{content:"";flex:0 0 64px;height:1px;background:var(--gold);opacity:.6}
+  h1{font-family:Georgia,"Times New Roman",serif;font-size:58px;line-height:1.12;font-weight:400;letter-spacing:-.005em;max-width:1080px}
+  h1.xl{font-size:70px}
+  .dark h1{color:#f6f2e8}
+  .lede{font-size:19px;line-height:1.55;color:var(--sub);margin-top:24px;max-width:800px}
+  .dark .lede{color:#b9c0d2}
+  .spacer{flex:1}
+
+  .foot{display:flex;align-items:baseline;gap:26px;border-top:1px solid var(--hairline);padding-top:18px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);font-weight:500}
+  .foot b{color:var(--ink);font-weight:600}
+  .dark .foot{border-top-color:rgba(246,242,232,.22);color:#7d87a1}
+  .dark .foot b{color:#f6f2e8}
+  .foot .pg{margin-left:auto;letter-spacing:.1em}
+
+  .cards{display:grid;gap:0;margin-top:46px;border-top:1px solid var(--hairline)}
+  .card{border-bottom:1px solid var(--hairline);border-right:1px solid var(--hairline);padding:24px 22px 26px;background:transparent}
+  .card:last-child,.cards .card:nth-last-child(1){border-right:none}
+  .card .num{font-family:Georgia,serif;font-size:30px;color:var(--gold);margin-bottom:12px}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:9px}
+  .card p{font-size:13.5px;line-height:1.55;color:var(--sub)}
+  .card .tag{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:10px;font-weight:600}
+  .cards.rule5{grid-template-columns:repeat(5,1fr)}
+  .cards.rule4{grid-template-columns:repeat(4,1fr)}
+  .cards.rule3{grid-template-columns:repeat(3,1fr)}
+  .cards.rule5 .card:nth-child(5n),.cards.rule4 .card:nth-child(4n),.cards.rule3 .card:nth-child(3n){border-right:none}
+
+  .cols{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:24px;align-items:stretch;margin-top:50px}
+  .cols .arrow{align-self:center;font-family:Georgia,serif;font-size:24px;color:var(--gold)}
+  .col{border-top:2px solid var(--navy);padding:24px 4px 0}
+  .col .tag{font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;margin-bottom:13px;display:block;color:var(--navy)}
+  .col p{font-size:14.5px;line-height:1.6;color:var(--sub)}
+
+  table{border-collapse:collapse;width:100%;margin-top:42px;font-size:14.5px}
+  th{border-bottom:2px solid var(--navy);color:var(--navy);text-align:left;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;padding:0 16px 12px}
+  td{border-bottom:1px solid var(--hairline);padding:14px 16px;vertical-align:top}
+  td.k{font-weight:600;white-space:nowrap;width:320px}
+  td.c{text-align:center;font-weight:600;white-space:nowrap}
+  td.muted{color:var(--sub)}
+  .legend{font-size:12.5px;color:var(--faint);margin-top:14px}
+
+  .pipeline{display:flex;align-items:center;gap:18px;margin-top:56px;font-family:Georgia,serif;font-size:27px;flex-wrap:wrap}
+  .pipeline .sep{color:var(--gold)}
+  .pipeline .dim{color:#a7a293}
+  .loopback{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-top:16px;font-weight:600}
+  .statement{font-family:Georgia,serif;font-size:28px;margin-top:0;color:var(--navy)}
+
+  .bigline{font-family:Georgia,serif;font-size:22px;line-height:1.5;color:var(--navy);max-width:920px;font-style:italic}
+  .dark .bigline{color:#d8d2c2}
+
+  .report{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;margin-top:42px}
+  .panel{border:1px solid var(--hairline);background:#fff}
+  .panel .head{border-bottom:2px solid var(--navy);color:var(--navy);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;padding:13px 20px}
+  .panel .body{padding:20px 22px}
+  .pass{font-family:Georgia,serif;font-size:50px;color:var(--navy)}
+  .pass small{font-family:"Helvetica Neue",Helvetica,sans-serif;font-size:14.5px;color:var(--sub)}
+  .bar{height:7px;background:#e8e2d3;margin-top:12px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--navy)}
+  .rowlab{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:20px 0 10px}
+  .fcat{display:flex;align-items:center;gap:12px;font-size:13.5px;margin-top:8px}
+  .fcat .fbar{flex:1;height:7px;background:#e8e2d3;overflow:hidden}
+  .fcat .fbar i{display:block;height:100%;background:var(--gold)}
+  .fcat b{width:16px;text-align:right}
+  .rule{display:grid;grid-template-columns:135px 1fr;gap:14px;font-size:13.5px;margin-top:11px;line-height:1.5}
+  .rule b{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--navy);padding-top:2px}
+  .rule span{color:var(--sub)}
+
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:50px}
+  .duo .card{border:none;border-top:2px solid var(--navy);padding:24px 4px 0}
+  .duo .card h3{font-size:18px}
+  .duo .card p{font-size:14.5px;line-height:1.65}
+
+  .hint{position:fixed;bottom:9px;left:0;right:0;text-align:center;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#a29d8d;font-weight:500}
+
+  .diag{margin-top:64px;display:flex;flex-direction:column;align-items:center}
+  .node{border:1px solid var(--navy);padding:13px 30px;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;background:#fff;color:var(--navy)}
+  .node.top{background:var(--navy);color:#f3efe6}
+  .fan{width:900px;height:70px}
+  .fan line{stroke:#c8c2b0;stroke-width:1}
+  .row5{display:flex;gap:16px}
+  .row5 .node{font-size:10px;padding:10px 17px}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1 -->
+<section class="slide dark">
+  <div class="spacer"></div>
+  <div class="eyebrow">An end-to-end playbook</div>
+  <h1 class="xl">AI Forward Deployed<br>Engineering.</h1>
+  <p class="lede">How intelligence enters a business — from discovery to a trusted production system. Synthesized from the Varick Agents FDE methodology.</p>
+  <div class="spacer"></div>
+  <div class="foot"><b>Overview</b><span>Discovery</span><span>Audit</span><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">01 / 18</span></div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="eyebrow">The premise</div>
+  <h1>Every company can now buy intelligence.</h1>
+  <p class="lede">The same foundational capability is available to anyone able to pay for it — and every enterprise is already using the same stack.</p>
+  <div class="diag">
+    <div class="node top">A foundational model</div>
+    <svg class="fan" viewBox="0 0 900 70" aria-hidden="true">
+      <line x1="450" y1="0" x2="170" y2="70"/><line x1="450" y1="0" x2="310" y2="70"/>
+      <line x1="450" y1="0" x2="450" y2="70"/><line x1="450" y1="0" x2="590" y2="70"/>
+      <line x1="450" y1="0" x2="730" y2="70"/>
+    </svg>
+    <div class="row5">
+      <div class="node">Company A</div><div class="node">Company B</div><div class="node">Company C</div><div class="node">Company D</div><div class="node">Company E</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="foot"><b>Overview</b><span>Discovery</span><span>Audit</span><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">02 / 18</span></div>
+</section>
+
+<!-- 3 -->
+<section class="slide dark">
+  <div class="eyebrow">The premise</div>
+  <div class="spacer"></div>
+  <h1 class="xl">If everyone can access it, intelligence alone cannot be the moat.</h1>
+  <p class="lede">The edge is no longer who has intelligence. It is where, how, and why they use it. Someone has to decide where intelligence belongs — and where it does not.</p>
+  <div class="spacer"></div>
+  <div class="foot"><b>Overview</b><span class="pg">03 / 18</span></div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="eyebrow">The role</div>
+  <h1>That person is the forward deployed engineer.</h1>
+  <div class="cols">
+    <div class="col"><span class="tag">Business reality</span><p>How the work actually happens today — tools, people, exceptions, incentives, politics.</p></div>
+    <div class="arrow">→</div>
+    <div class="col"><span class="tag">FDE judgment</span><p>Where intelligence belongs, and where it does not. The bridge between both sides of the aisle.</p></div>
+    <div class="arrow">→</div>
+    <div class="col"><span class="tag">Deployed AI system</span><p>Working software carrying real responsibility inside the business.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">The best combination of consultant and engineer — not the average of the two. FDEs are in demand because they control how intelligence enters the business.</p>
+  <div class="spacer"></div>
+  <div class="foot"><b>Overview</b><span>Discovery</span><span>Audit</span><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">04 / 18</span></div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="eyebrow">The operating loop</div>
+  <h1>Six stages. One loop.</h1>
+  <div class="pipeline">
+    <span>Audit</span><span class="sep">→</span><span class="dim">Build</span><span class="sep">→</span><span>Evals</span><span class="sep">→</span><span>Deploy</span><span class="sep">→</span><span class="dim">Observe</span><span class="sep">→</span><span class="dim">Improve</span>
+  </div>
+  <div class="loopback">↻ &nbsp;The loop runs again — improving one workflow exposes the next bottleneck</div>
+  <div class="cards rule3" style="margin-top:44px">
+    <div class="card"><span class="tag">The job, part 1</span><h3>Audit</h3><p>Identifies the right problem and maps reality — the consulting half of the role.</p></div>
+    <div class="card"><span class="tag">The job, part 2</span><h3>Evals</h3><p>Prove the system behaves correctly before it carries real responsibility.</p></div>
+    <div class="card"><span class="tag">The job, part 3</span><h3>Deployment</h3><p>Makes it work inside the business — adoption, monitoring, and nothing breaking.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <div class="statement">Each stage earns the right to the next.</div>
+  <div class="spacer"></div>
+  <div class="foot"><b>Overview</b><span>Discovery</span><span>Audit</span><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">05 / 18</span></div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="eyebrow">Phase 1 · Discovery</div>
+  <h1>The documented process is rarely the real process.</h1>
+  <p class="lede">Ask, and you'll hear "an email arrives." Watch, and every simple step hides the real work.</p>
+  <div class="cards rule5">
+    <div class="card"><span class="tag">01 · The trigger</span><h3>An email arrives</h3><p>40+ senders, no two alike. Half are exceptions in disguise. Routing lives in one person's head.</p></div>
+    <div class="card"><span class="tag">02 · Re-keyed by hand</span><h3>Copied into a spreadsheet</h3><p>Which spreadsheet? There are four. A typo doesn't error — it becomes the new source of truth.</p></div>
+    <div class="card"><span class="tag">03 · Tribal knowledge</span><h3>Checked in an internal system</h3><p>No API, no export. "Status" means five things. The one expert retires in eight months.</p></div>
+    <div class="card"><span class="tag">04 · Exists as a reply</span><h3>Approved in Slack</h3><p>The approval of record is a chat message, findable only by the person who asked for it.</p></div>
+    <div class="card"><span class="tag">05 · 30 required fields</span><h3>Entered into the ERP</h3><p>The official system arrives last, fed by everything undocumented that came before it.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">If you don't look, you build for a system that doesn't map to reality — which is how most AI pilots fail.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><b>Discovery</b><span>Audit</span><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">06 / 18</span></div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="eyebrow">Phase 1 · Discovery</div>
+  <h1>Sit with the work, not the org chart.</h1>
+  <div class="cards rule4" style="margin-top:50px">
+    <div class="card"><h3>Shadow full days</h3><p>In a one-hour meeting people describe the job they think they have. Beside them for eight, you see the undocumented exception actually happen.</p></div>
+    <div class="card"><h3>Get system access</h3><p>ERP, CRM, the four spreadsheets, the Slack approvals. Read the real artifacts, not the SOP.</p></div>
+    <div class="card"><h3>Expect multiple owners</h3><p>Several people run the "same" process differently. One source is a sample size of one — sit with more.</p></div>
+    <div class="card"><h3>Chase the exceptions</h3><p>One way to go right, a thousand ways to go wrong. The unwritten rules for what counts are the actual spec.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Discovery is also where trust is built — the relationship is infrastructure for everything that follows.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><b>Discovery</b><span>Audit</span><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">07 / 18</span></div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="eyebrow">Phase 2 · Audit</div>
+  <h1>Produce the operating map.</h1>
+  <p class="lede">Collect context → trace findings → one decision artifact the business can act on.</p>
+  <table>
+    <tr><th colspan="2">The audit artifact — one operating map</th></tr>
+    <tr><td class="k">Current-state workflow</td><td class="muted">How the work actually happens today</td></tr>
+    <tr><td class="k">Future-state workflow</td><td class="muted">The same work, rebuilt around AI</td></tr>
+    <tr><td class="k">Selected use case</td><td class="muted">One workflow, chosen for value</td></tr>
+    <tr><td class="k">Boundaries</td><td class="muted">What the system may and may not do</td></tr>
+    <tr><td class="k">Expected business value</td><td class="muted">Hours, cost, and errors — quantified</td></tr>
+  </table>
+  <div class="spacer"></div>
+  <p class="bigline">The audit is a product in its own right — a cleanly mapped department with an ROI matrix is worth money before anything is built.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><b>Audit</b><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">08 / 18</span></div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="eyebrow">Phase 2 · Audit</div>
+  <h1>Decide what should be automated — and what should not.</h1>
+  <div class="cols">
+    <div class="col"><span class="tag">Deterministic software</span><p>When the rules and inputs are predictable. Most of a good solution is this — don't spend a model on an if-statement.</p></div>
+    <div class="arrow">·</div>
+    <div class="col"><span class="tag">An agent</span><p>When the objective is clear but the inputs, path, or required actions vary. Often only 3 steps of 10 need judgment.</p></div>
+    <div class="arrow">·</div>
+    <div class="col"><span class="tag">A human in control</span><p>When the decision carries material ambiguity, accountability, or irreversible consequences.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Some workflows shouldn't be touched at all. Prioritize lengthy, high-volume workflows where the improvement is large enough to matter.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><b>Audit</b><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">09 / 18</span></div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="eyebrow">Phase 2 · Audit</div>
+  <h1>A business measures exactly three things.</h1>
+  <div class="cards rule3" style="margin-top:50px">
+    <div class="card"><div class="num">1</div><h3>Revenue uplift</h3><p>Reach customers faster, drive more value per customer, unlock throughput the old process capped.</p></div>
+    <div class="card"><div class="num">2</div><h3>Risk mitigation</h3><p>Fewer errors, auditable decisions, escalation by rule — the failures that used to be silent now leave evidence.</p></div>
+    <div class="card"><div class="num">3</div><h3>Cost savings</h3><p>Hours returned, rework eliminated, cost per run measured and driven down.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Every expected-value claim in the operating map lands in one of these buckets — quantified, not vibes.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><b>Audit</b><span>Build</span><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">10 / 18</span></div>
+</section>
+
+<!-- 11 -->
+<section class="slide dark">
+  <div class="eyebrow">Phase 3 · Build</div>
+  <div class="spacer"></div>
+  <h1 class="xl">Build for the unhappy paths.</h1>
+  <p class="lede">There is one way something goes right and a thousand ways it goes wrong. An agent built for the happy path is worth nothing; the one that handles the exceptions is the one worth deploying.</p>
+  <div class="spacer"></div>
+  <div class="foot"><b>Build</b><span class="pg">11 / 18</span></div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <div class="eyebrow">Phase 3 · Build</div>
+  <h1>Add capability in this order.</h1>
+  <div class="cards rule4" style="margin-top:40px">
+    <div class="card"><div class="num">1</div><h3>Agent loop</h3><p>Prompt → model → response → next step, until done or a max-step limit hits.</p></div>
+    <div class="card"><div class="num">2</div><h3>Tool use</h3><p>Start minimal — one API call, one search. The agent decides when to call them.</p></div>
+    <div class="card"><div class="num">3</div><h3>Guardrails</h3><p>Input validation · max-step limit · output filtering.</p></div>
+    <div class="card"><div class="num">4</div><h3>Audit trail</h3><p>Log every prompt, tool call, result, error, timestamp. No visible traces, no trust.</p></div>
+    <div class="card"><div class="num">5</div><h3>Structured outputs</h3><p>A defined JSON schema, validated on every response. Retry or escalate on mismatch.</p></div>
+    <div class="card"><div class="num">6</div><h3>State &amp; recovery</h3><p>Checkpoint every few steps. Kill it deliberately — it must resume where it stopped.</p></div>
+    <div class="card"><div class="num">7</div><h3>Failure handling</h3><p>Enumerate the modes — missing data, dead APIs, timeouts, duplicates — and define behavior for each.</p></div>
+    <div class="card"><div class="num">8</div><h3>Retries &amp; backoff</h3><p>Exponential on every external call: 1s · 2s · 4s · 8s, capped. Escalate when retries run out.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Pick one model and one agent platform and get genuinely good at it — your value is judgment about the workflow, not the inference layer.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><span>Audit</span><b>Build</b><span>Evals</span><span>Deploy</span><span>Loop</span><span class="pg">12 / 18</span></div>
+</section>
+
+<!-- 13 -->
+<section class="slide">
+  <div class="eyebrow">Phase 4 · Evals</div>
+  <h1>Turn non-determinism into evidence.</h1>
+  <p class="lede">A golden dataset of real cases with hand-labeled ideal outputs — graded on four dimensions.</p>
+  <table>
+    <tr><th>The evaluation cases</th><th style="text-align:center">Right data</th><th style="text-align:center">Required steps</th><th style="text-align:center">Matches expert</th><th style="text-align:center">Safe to act</th></tr>
+    <tr><td class="k">The normal case</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td></tr>
+    <tr><td class="k">The edge case</td><td class="c">✓</td><td class="c">✓</td><td class="c">✗</td><td class="c">✗</td></tr>
+    <tr><td class="k">Incomplete information</td><td class="c">✗</td><td class="c">—</td><td class="c">—</td><td class="c">→ human</td></tr>
+    <tr><td class="k">An ambiguous request</td><td class="c">✓</td><td class="c">✗</td><td class="c">—</td><td class="c">→ human</td></tr>
+    <tr><td class="k">A high-risk action</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td><td class="c">→ human</td></tr>
+  </table>
+  <div class="legend">✓ expected behavior &nbsp;·&nbsp; ✗ failure, with the evidence kept &nbsp;·&nbsp; → human escalated by rule</div>
+  <div class="spacer"></div>
+  <p class="bigline">No evidence, no autonomy — the eval suite is what earns the system its next level of authority.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><span>Audit</span><span>Build</span><b>Evals</b><span>Deploy</span><span>Loop</span><span class="pg">13 / 18</span></div>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+  <div class="eyebrow">Phase 4 · Evals</div>
+  <h1>Failed runs are the product.</h1>
+  <div class="report">
+    <div class="panel">
+      <div class="head">The evaluation report</div>
+      <div class="body">
+        <div class="pass">41<small> / 50 graded runs passed — 82%</small></div>
+        <div class="bar"><i style="width:82%"></i></div>
+        <div class="rowlab">Failure categories — 9 runs</div>
+        <div class="fcat"><span style="width:150px">missing data</span><div class="fbar"><i style="width:100%"></i></div><b>5</b></div>
+        <div class="fcat"><span style="width:150px">wrong record pulled</span><div class="fbar"><i style="width:80%"></i></div><b>4</b></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="head">Operating rules</div>
+      <div class="body">
+        <div class="rule"><b>Confidence</b><span>Below 0.80, the system must escalate.</span></div>
+        <div class="rule"><b>Escalation</b><span>High-risk actions always reach a person — by rule, not judgment call.</span></div>
+        <div class="rule"><b>Readiness</b><span>An honest maturity statement: "pilot — human review on every action."</span></div>
+        <div class="rule"><b>Subjective work</b><span>Where beauty is in the eye of the beholder, past examples define "good" — and human feedback keeps improving the harness.</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Investigate every failure, categorize it, feed it back. That is what turning non-determinism into evidence means.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><span>Audit</span><span>Build</span><b>Evals</b><span>Deploy</span><span>Loop</span><span class="pg">14 / 18</span></div>
+</section>
+
+<!-- 15 -->
+<section class="slide">
+  <div class="eyebrow">Phase 5 · Deployment</div>
+  <h1>Make it work inside the business.</h1>
+  <div class="cards rule3" style="margin-top:46px">
+    <div class="card"><div class="num">1</div><h3>Integrate with what exists</h3><p>Never open with "first, migrate off your ERP." Build on top of the current stack and connect it — that's the edge over rip-and-replace.</p></div>
+    <div class="card"><div class="num">2</div><h3>Test in a controlled environment</h3><p>A sandbox inside the company's own infrastructure, where you can run, inspect, and debug safely.</p></div>
+    <div class="card"><div class="num">3</div><h3>Increase autonomy gradually</h3><p>Shadow mode → approve every action → approve only risky actions → autonomy where earned. Smallest useful action first.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">The pattern to push for: agent handles intake, validation, and drafting — a human approves — the system completes the rest.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><span>Audit</span><span>Build</span><span>Evals</span><b>Deploy</b><span>Loop</span><span class="pg">15 / 18</span></div>
+</section>
+
+<!-- 16 -->
+<section class="slide">
+  <div class="eyebrow">Phase 5 · Deployment</div>
+  <h1>Deployment is a people problem wearing a software costume.</h1>
+  <div class="duo">
+    <div class="card"><h3>You are a risk to your sponsor</h3><p>Status quo is safe; bringing you in is not — if it fails, it's their name on it. De-risk them: visible traces, human approval gates, gradual autonomy, measurable checkpoints. Prove value before asking for trust.</p></div>
+    <div class="card"><h3>Your job is to get them promoted</h3><p>Drive value cost-effectively in the three buckets and make it attributable, so at review time they can point at it. Face to face makes every hard conversation easier — the relationship is infrastructure.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">When production breaks, it's your name on the line: know who to call, what to do, and how to fix it.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><span>Audit</span><span>Build</span><span>Evals</span><b>Deploy</b><span>Loop</span><span class="pg">16 / 18</span></div>
+</section>
+
+<!-- 17 -->
+<section class="slide">
+  <div class="eyebrow">Phase 6 · Observe &amp; improve</div>
+  <h1>The loop runs again.</h1>
+  <p class="lede">Watch production — metrics, failure categories, cost per run. Feed failures back into the golden dataset and the harness.</p>
+  <div class="pipeline" style="margin-top:50px">
+    <span class="dim">Audit</span><span class="sep">→</span><span class="dim">Build</span><span class="sep">→</span><span class="dim">Evals</span><span class="sep">→</span><span class="dim">Deploy</span><span class="sep">→</span><span>Observe</span><span class="sep">→</span><span>Improve</span><span class="sep">↻</span>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Bottlenecks are interconnected: fixing one workflow exposes the constraint upstream and frees capacity downstream. The next engagement is usually visible from inside the first — that's how one workflow becomes the whole business.</p>
+  <div class="spacer"></div>
+  <div class="foot"><span>Overview</span><span>Discovery</span><span>Audit</span><span>Build</span><span>Evals</span><span>Deploy</span><b>Loop</b><span class="pg">17 / 18</span></div>
+</section>
+
+<!-- 18 -->
+<section class="slide dark">
+  <div class="eyebrow">The job</div>
+  <div class="spacer"></div>
+  <h1 class="xl">An FDE owns the path from messy workflow to trusted production system.</h1>
+  <p class="lede">Audit → Build → Evals → Deploy → Observe → Improve. Each stage earns the right to the next — and the loop runs again.</p>
+  <div class="spacer"></div>
+  <div class="foot"><b>Loop</b><span class="pg">18 / 18</span></div>
+</section>
+
+</div></div>
+<div class="hint">← → navigate &nbsp;·&nbsp; click to advance</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>
