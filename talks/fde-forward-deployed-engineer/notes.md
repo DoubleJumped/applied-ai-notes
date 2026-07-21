@@ -67,8 +67,8 @@ Demo screen: drop `invoice_0417.pdf` to ingest → INTAKE VALIDATED → AGENT DR
 ![slide](slides/13-002736-audit-operating-map.jpg)
 Collect context (interviews, emails, spreadsheets, SOPs, systems, approvals, exception paths) → trace findings (bottlenecks, repetitive work, judgment points, required systems, failure modes, automation worth doing) → produce **the operating map**: current-state workflow, future-state workflow rebuilt around AI, one selected use case chosen for value, boundaries (what the system may and may not do), and expected business value quantified in hours, cost, and errors.
 
-### [00:31:25] Decide what should be automated — and what should not
-![slide](slides/14-003125-automate-or-not.jpg)
+### [00:32:00] Decide what should be automated — and what should not
+![slide](slides/14-003200-automate-or-not.jpg)
 Each step routes to one of three: **deterministic software** (rules and inputs predictable), **an agent** (objective clear but inputs/path/actions vary), or **a human in control** (material ambiguity, accountability, or irreversible consequences). "Prioritize lengthy, high-volume workflows where the improvement is large enough to matter."
 
 ### [00:32:10] Evals: turn non-determinism into evidence
@@ -85,16 +85,16 @@ Audit → Build → Evals → Deploy → Observe → Improve, then the loop runs
 
 ## Part 4 — The 30-day plan
 
-### [00:39:09] Roadmap overview
-![slide](slides/18-003909-30-day-roadmap.jpg)
-"Most successful FDE candidates come from consulting, product management, or software engineering." Complete the roadmap **in parallel with applying and interviewing**. Days 1–7 build the agent · 8–14 make it production-ready · 15–21 measure and optimize · 22–30 communicate and defend.
+### [00:39:55] Roadmap overview
+![slide](slides/18-003955-30-day-roadmap.jpg)
+"Most successful FDE candidates come from consulting, product management, or software engineering." Complete the roadmap **in parallel with applying and interviewing**. Days 1–7 build the agent · 8–14 make it production-ready · 15–21 measure and optimize · 22–30 communicate and defend. For consultants and PMs: "choose two projects and take them deep" — production-ready AI agent, RAG pipeline, eval framework, MCP integration.
 
-### [00:39:55] Week 1 (days 1–7): build an agent that can complete a real loop
-![slide](slides/19-003955-week1-build-agent.jpg)
+### [00:40:10] Week 1 (days 1–7): build an agent that can complete a real loop
+![slide](slides/19-004010-week1-build-agent.jpg)
 1 Agent loop (prompt → model → response → next step, until done or max-step limit) · 2 Tool use (one API call + one web search; the agent decides when) · 3 Guardrails (input validation, max-step limit, output filtering) · 4 Context & memory (context window by default; external memory only when state must outlive the run) · 5 Audit trail (log every prompt, response, tool call, result, error, timestamp) · 6 Real workflow (one process that used to be manual — tie to a portfolio project) · 7 Checkpoint: a working agent with tools, guardrails, deliberate memory, full audit trail.
 
-### [00:42:10] Week 2 (days 8–14): turn the demo into a system that can recover
-![slide](slides/20-004210-week2-recover.jpg)
+### [00:42:25] Week 2 (days 8–14): turn the demo into a system that can recover
+![slide](slides/20-004225-week2-recover.jpg)
 8 Structured outputs (defined JSON schema, not free-form text) · 9 Schema validation (validate every response; retry or escalate on invalid structure) · 10 Failure modes (missing data, malformed responses, dead APIs, timeouts, duplicates, partial completion) · 11 Checkpointing (save state every few steps) · 12 Resume (stop deliberately; restart from last checkpoint) · 13 Failure handling (explicit behavior for tool failure, bad output, incomplete state, unsafe continuation) · 14 Checkpoint: a resumable agent with structured outputs, state recovery, explicit failure behavior.
 
 ### [00:43:40] Week 3 (days 15–21): make it measurable and economically viable
@@ -105,8 +105,8 @@ Audit → Build → Evals → Deploy → Observe → Improve, then the loop runs
 ![slide](slides/22-004425-week4-defend.jpg)
 22 The pain point (who does the work, what takes time, where errors occur, what it costs) · 23 Why AI belongs (why not just software; what stays human; where autonomy stops) · 24 Architecture (stack, tools, models, data, memory, guardrails — and why each exists) · 25 Iterations (what v1 got wrong, what failed, what changed) · 26 The evals (dataset, pass rate, failure categories, thresholds, open risks) · 27 Economics (time saved, errors reduced, risk, revenue, cost per query) · 28 Rehearse for an engineer (architecture, decisions, failures, tradeoffs) · 29 Rehearse for a VP (problem, outcome, evidence, risk — plain language) · 30 Final checkpoint: a complete FDE case study for engineers and executives alike.
 
-### [00:45:55] Do the job before you have the title
-![slide](slides/23-004555-do-the-job.jpg)
+### [00:46:10] Do the job before you have the title
+![slide](slides/23-004610-do-the-job.jpg)
 "On Day 30, you should not merely understand forward deployed engineering. You should have evidence that you can do it." Milestones: Day 7 working agent · Day 14 recoverable system · Day 21 evaluated system · Day 30 complete FDE case study. The portfolio: agent loop, two tools, guardrails, deliberate memory, audit trail, structured outputs, schema validation, checkpointed state, resume after failure, explicit failure paths, retries + backoff, failure taxonomy, golden dataset, eval suite, cost per query — plus workflow audit, system architecture, evaluation report, deployment controls, business case.
 
 ## Outro
