@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — Atlas</title>
+<style>
+  :root{
+    --paper:#f2f1ed;
+    --card:#ffffff;
+    --ink:#191b1f;
+    --sub:#62656c;
+    --faint:#9b9ea6;
+    --hairline:#e0dfd9;
+    --cobalt:#2743e6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:var(--paper);color:var(--ink);overflow:hidden;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;position:relative;flex:none;overflow:hidden;background:var(--paper)}
+
+  #canvas{
+    position:absolute;top:0;left:0;width:4000px;height:2250px;
+    background-image:radial-gradient(circle, #d8d7d0 1.4px, transparent 1.4px);
+    background-size:56px 56px;
+    transform-origin:0 0;
+    transition:transform .85s cubic-bezier(.45,.05,.2,1);
+  }
+  @media (prefers-reduced-motion:reduce){#canvas{transition:none}}
+
+  .node{position:absolute;background:var(--card);border:1px solid var(--hairline);border-radius:10px;box-shadow:0 1px 3px rgba(25,27,31,.07)}
+
+  /* center block */
+  #center{left:1480px;top:820px;width:1040px;padding:54px 60px 48px;text-align:center}
+  #center .k{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--cobalt);font-weight:600;margin-bottom:20px}
+  #center h1{font-size:58px;line-height:1.08;font-weight:700;letter-spacing:-.02em}
+  #center .premise{font-size:19px;line-height:1.55;color:var(--sub);margin-top:20px}
+  #center .trio{display:flex;gap:0;margin-top:34px;border-top:1px solid var(--hairline);padding-top:26px;text-align:left}
+  #center .trio div{flex:1;padding:0 20px;border-left:1px solid var(--hairline)}
+  #center .trio div:first-child{border-left:none;padding-left:0}
+  #center .trio b{display:block;font-size:14px;margin-bottom:6px}
+  #center .trio span{font-size:12.5px;line-height:1.5;color:var(--sub)}
+
+  /* stations */
+  .station{width:640px;padding:36px 40px}
+  .station .num{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--cobalt);color:#fff;font-size:15px;font-weight:700;margin-bottom:16px}
+  .station h2{font-size:34px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px}
+  .station .lead{font-size:16px;font-weight:600;margin-bottom:10px}
+  .station p{font-size:14.5px;line-height:1.55;color:var(--sub)}
+  .station .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+  .station .chips i{font-style:normal;font-size:11.5px;font-weight:600;border:1px solid var(--hairline);border-radius:999px;padding:5px 11px;color:var(--sub)}
+
+  /* satellites */
+  .sat{width:430px;padding:28px 30px}
+  .sat .big{font-size:64px;font-weight:700;letter-spacing:-.02em;color:var(--cobalt);line-height:1}
+  .sat h3{font-size:19px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
+  .sat p{font-size:13px;line-height:1.55;color:var(--sub)}
+  .sat .mini{margin-top:12px}
+  .sat .mini .row{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--sub);margin-top:6px}
+  .sat .mini .bar{flex:1;height:6px;background:#eeede8;border-radius:3px;overflow:hidden}
+  .sat .mini .bar i{display:block;height:100%;background:var(--cobalt);border-radius:3px}
+
+  #hud{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;display:flex;align-items:center;gap:18px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);font-weight:600;z-index:5;background:rgba(242,241,237,.92);border:1px solid var(--hairline);border-radius:999px;padding:9px 22px}
+  #hud b{color:var(--ink)}
+  .hint{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#c2c0b8;padding-bottom:2px}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+<div id="canvas">
+
+  <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 4000 2250" fill="none" aria-hidden="true">
+    <ellipse cx="2000" cy="1125" rx="1520" ry="820" stroke="#c8cbe8" stroke-width="3"/>
+    <ellipse cx="2000" cy="1125" rx="1520" ry="820" stroke="#2743e6" stroke-width="3" stroke-dasharray="26 18" opacity=".55"/>
+    <g fill="#2743e6" opacity=".8">
+      <path d="M 2000 302 l -20 -12 v 24 z"/>
+      <path d="M 3522 1128 l -12 -20 h 24 z" transform="rotate(90 3520 1125)"/>
+      <path d="M 2000 1948 l 20 12 v -24 z"/>
+      <path d="M 482 1128 l 12 20 h -24 z" transform="rotate(90 480 1125)"/>
+    </g>
+  </svg>
+
+  <!-- center -->
+  <div class="node" id="center">
+    <div class="k">An end-to-end playbook</div>
+    <h1>Forward Deployed Engineering</h1>
+    <p class="premise">Every company can buy the same intelligence — so the edge is where, how, and why it's deployed. Someone has to decide. That person is the FDE.</p>
+    <div class="trio">
+      <div><b>Business reality</b><span>How the work actually happens — tools, people, exceptions.</span></div>
+      <div><b>FDE judgment</b><span>Where intelligence belongs, and where it does not.</span></div>
+      <div><b>Deployed system</b><span>Software carrying real responsibility.</span></div>
+    </div>
+  </div>
+
+  <!-- stations around the loop (clockwise from top) -->
+  <div class="node station" id="st-audit" style="left:1680px;top:150px">
+    <div class="num">1</div>
+    <h2>Audit</h2>
+    <p class="lead">Map the real process, not the documented one.</p>
+    <p>Shadow full days beside the work. Trace every step one level deeper — the exceptions are the spec. Produce one operating map: current state, future state, one use case, boundaries, quantified value.</p>
+    <div class="chips"><i>shadow full days</i><i>system access</i><i>operating map</i></div>
+  </div>
+
+  <div class="node station" id="st-build" style="left:3080px;top:520px">
+    <div class="num">2</div>
+    <h2>Build</h2>
+    <p class="lead">One way it goes right. A thousand ways it goes wrong.</p>
+    <p>An agent built for the happy path is a demo. Add capability in order: loop, tools, guardrails, audit trail, structured outputs, checkpoints and resume, failure handling, retries with backoff.</p>
+    <div class="chips"><i>guardrails</i><i>audit trail</i><i>resume after failure</i></div>
+  </div>
+
+  <div class="node station" id="st-evals" style="left:3080px;top:1360px">
+    <div class="num">3</div>
+    <h2>Evals</h2>
+    <p class="lead">Turn non-determinism into evidence.</p>
+    <p>A golden dataset of real cases, hand-labeled and graded: right data, required steps, matches expert, safe to act. Below 0.80 confidence the system escalates; high-risk actions always reach a person.</p>
+    <div class="chips"><i>golden dataset</i><i>graded runs</i><i>escalation rules</i></div>
+  </div>
+
+  <div class="node station" id="st-deploy" style="left:1680px;top:1770px">
+    <div class="num">4</div>
+    <h2>Deploy</h2>
+    <p class="lead">Build on top of what exists — never rip-and-replace.</p>
+    <p>Integrate with the trusted stack, test in a sandbox inside their walls, and increase autonomy gradually: shadow mode, then approval on every action, then authority where it's earned.</p>
+    <div class="chips"><i>integrate</i><i>sandbox</i><i>earned autonomy</i></div>
+  </div>
+
+  <div class="node station" id="st-observe" style="left:290px;top:1360px">
+    <div class="num">5</div>
+    <h2>Observe</h2>
+    <p class="lead">Watch production like it's your name on it — because it is.</p>
+    <p>Metrics, failure categories, cost per run. Every failure is categorized, investigated, and fed back into the golden dataset and the harness.</p>
+    <div class="chips"><i>metrics</i><i>failure taxonomy</i><i>cost per run</i></div>
+  </div>
+
+  <div class="node station" id="st-improve" style="left:290px;top:520px">
+    <div class="num">6</div>
+    <h2>Improve</h2>
+    <p class="lead">Fixing one workflow exposes the next.</p>
+    <p>Bottlenecks are interconnected — the next engagement is visible from inside the first. The loop returns to Audit, and one workflow becomes the whole business.</p>
+    <div class="chips"><i>feed back</i><i>next bottleneck</i><i>loop → audit</i></div>
+  </div>
+
+  <!-- satellites -->
+  <div class="node sat" id="sat-95" style="left:1240px;top:280px">
+    <div class="big">95%</div>
+    <p style="margin-top:8px">of AI pilots fail — built for the documented process instead of the real one. Discovery is where the project is won or lost.</p>
+  </div>
+
+  <div class="node sat" id="sat-traces" style="left:2900px;top:170px">
+    <h3>No traces, no trust.</h3>
+    <p>Log every prompt, tool call, result, and error. A visible audit trail is why the business says yes to an agent at all.</p>
+  </div>
+
+  <div class="node sat" id="sat-82" style="left:2960px;top:1020px;width:460px">
+    <div class="big">82%</div>
+    <p style="margin-top:6px;font-weight:600;color:var(--ink)">41 / 50 graded runs passed</p>
+    <div class="mini">
+      <div class="row"><span style="width:130px">missing data</span><div class="bar"><i style="width:100%"></i></div><b>5</b></div>
+      <div class="row"><span style="width:130px">wrong record</span><div class="bar"><i style="width:80%"></i></div><b>4</b></div>
+    </div>
+    <p style="margin-top:12px">The other nine runs are the roadmap.</p>
+  </div>
+
+  <div class="node sat" id="sat-people" style="left:1100px;top:1800px">
+    <h3>Deployment is a people problem.</h3>
+    <p>You are a risk to your sponsor — de-risk them with visible traces and approval gates, then make the value attributable. Your job is to get them promoted.</p>
+  </div>
+
+  <div class="node sat" id="sat-buckets" style="left:300px;top:170px">
+    <h3>A business measures three things.</h3>
+    <p><b style="color:var(--cobalt)">1</b> revenue uplift &nbsp;·&nbsp; <b style="color:var(--cobalt)">2</b> risk mitigation &nbsp;·&nbsp; <b style="color:var(--cobalt)">3</b> cost savings. Every claim in the operating map lands in one, quantified.</p>
+  </div>
+
+</div>
+
+<div id="hud"></div>
+</div></div>
+<div class="hint">← → navigate · click to advance · the overview is the message</div>
+
+<script>
+  // steps: camera targets {cx,cy,s,label}
+  const steps=[
+    {cx:2000,cy:1125,s:0.40,label:"the loop"},
+    {cx:2000,cy:1110,s:0.98,label:"the role"},
+    {cx:1990,cy:340,s:1.10,label:"1 · audit"},
+    {cx:1455,cy:420,s:1.45,label:"why audits matter"},
+    {cx:3400,cy:700,s:1.15,label:"2 · build"},
+    {cx:3115,cy:330,s:1.45,label:"no traces, no trust"},
+    {cx:3400,cy:1545,s:1.15,label:"3 · evals"},
+    {cx:3190,cy:1240,s:1.50,label:"the report"},
+    {cx:2000,cy:1945,s:1.15,label:"4 · deploy"},
+    {cx:1350,cy:1935,s:1.40,label:"the people problem"},
+    {cx:610,cy:1545,s:1.15,label:"5 · observe"},
+    {cx:610,cy:700,s:1.15,label:"6 · improve"},
+    {cx:515,cy:260,s:1.80,label:"three buckets"},
+    {cx:2000,cy:1125,s:0.62,label:"the whole map"},
+    {cx:2000,cy:1125,s:0.40,label:"the loop runs again"}
+  ];
+  const canvas=document.getElementById('canvas');
+  const hud=document.getElementById('hud');
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),steps.length-1);
+  function apply(n){
+    i=Math.min(Math.max(n,0),steps.length-1);
+    const st=steps[i];
+    const tx=800-st.cx*st.s, ty=450-st.cy*st.s;
+    canvas.style.willChange='transform';
+    canvas.style.transform='translate3d('+tx+'px,'+ty+'px,0) scale('+st.s+')';
+    hud.innerHTML='<b>'+st.label+'</b><span>'+(i+1)+' / '+steps.length+'</span>';
+    history.replaceState(null,'','#'+(i+1));
+  }
+  canvas.addEventListener('transitionend',()=>{canvas.style.willChange='auto'});
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+    document.getElementById('stage').style.transformOrigin='center';
+  }
+  addEventListener('resize',fit);fit();
+  if(reduced)canvas.style.transition='none';
+  // first frame: snap, don't animate from identity
+  canvas.style.transition='none';
+  apply(i);
+  canvas.getBoundingClientRect();
+  if(!reduced)canvas.style.transition='';
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();apply(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();apply(i-1)}
+    else if(e.key==='Home')apply(0);
+    else if(e.key==='End')apply(steps.length-1);
+  });
+  addEventListener('click',e=>{apply(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>

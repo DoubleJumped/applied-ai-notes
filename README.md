@@ -16,6 +16,10 @@ Working notes on applied AI — talks, papers, experiments.
     - [keynote](playbooks/fde-presentation-keynote.html) — Jobs / presentation-zen: dark gradient, one idea per slide, billboard rule
     - [takahashi](playbooks/fde-presentation-takahashi.html) — Takahashi method: 40 rapid slides, giant text only
     - [sparkline](playbooks/fde-presentation-sparkline.html) — Duarte's Resonate structure: "what is" vs "what could be", with a live sparkline
+  - **[playbooks/refined/](playbooks/refined/) — the keepers.** Polished builds of the three strongest concepts:
+    - [fde-gallery](playbooks/refined/fde-gallery.html) — the card-minimal original, evolved: warm paper, oxblood accent, 16 slides
+    - [fde-onyx](playbooks/refined/fde-onyx.html) — cinematic one-idea keynote: graphite and champagne, giant stat beats
+    - [fde-atlas](playbooks/refined/fde-atlas.html) — the spatial loop map, rebuilt light and fast: porcelain and cobalt, GPU-composited camera
   - Ten more, each implementing a documented school of presentation design:
     - [kawasaki](playbooks/fde-presentation-kawasaki.html) — Guy Kawasaki's 10/20/30 rule: 10 slides, nothing under 30pt
     - [pechakucha](playbooks/fde-presentation-pechakucha.html) — PechaKucha 20×20: 20 visual slides, 20-second auto-advance with countdown ring
