@@ -5,6 +5,10 @@ Working notes on applied AI — talks, papers, experiments.
 ## Contents
 
 - [talks/](talks/) — slide + transcript breakdowns of talks worth keeping
+- [skills/](skills/) — reusable Claude Code deck-building skills (copy a folder into `~/.claude/skills/` to install):
+  - [deck-gallery](skills/deck-gallery/SKILL.md) — card-based content deck; monochrome default, palette in one `:root` block
+  - [deck-onyx](skills/deck-onyx/SKILL.md) — cinematic one-idea keynote; glacier-blue default
+  - [deck-atlas](skills/deck-atlas/SKILL.md) — zooming spatial map for loop/process content; cobalt default
 - [playbooks/](playbooks/) — synthesized methodologies ready to use
   - [FDE end-to-end playbook](playbooks/fde-end-to-end.md) — discovery → audit → build → evals → deployment → the loop
   - FDE presentation, four visual treatments of the same 18 slides (download and open locally):
