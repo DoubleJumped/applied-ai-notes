@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — a blackboard lecture</title>
+<style>
+  :root{
+    --board:#20302b;
+    --chalk:#eef1e6;
+    --dim:rgba(238,241,230,.72);
+    --faint:rgba(238,241,230,.5);
+    --yellow:#f4e8b8;
+    --blue:#cfe4f0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Chalkboard SE","Comic Sans MS",cursive;
+    background:#0e1613;
+    color:var(--chalk);
+    overflow:hidden;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(120% 120% at 50% 40%,#16211d 0%,#0b120f 100%);}
+  #stage{width:1600px;height:900px;position:relative;flex:none;
+    /* deep green-black board with mottled chalk-dust texture */
+    background-color:var(--board);
+    background-image:
+      radial-gradient(60% 50% at 22% 24%, rgba(120,150,135,.10) 0%, transparent 60%),
+      radial-gradient(50% 45% at 80% 30%, rgba(90,120,105,.10) 0%, transparent 62%),
+      radial-gradient(70% 60% at 62% 82%, rgba(70,95,82,.12) 0%, transparent 64%),
+      radial-gradient(45% 40% at 12% 78%, rgba(110,140,125,.08) 0%, transparent 60%),
+      radial-gradient(140% 120% at 50% 50%, transparent 55%, rgba(0,0,0,.42) 100%);
+    box-shadow:
+      inset 0 0 0 14px #2a3d35,          /* inner board frame */
+      inset 0 0 0 15px rgba(0,0,0,.35),
+      0 0 0 15px #3a2a1a,                /* wooden outer frame */
+      0 0 0 17px #23180e,
+      0 30px 80px rgba(0,0,0,.6);
+  }
+  /* chalk-dust grain overlay */
+  #stage::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;mix-blend-mode:screen;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='300' height='300' filter='url(%23n)' opacity='0.5'/></svg>");
+    background-size:300px 300px;
+  }
+  /* faint chalk smudges left behind by an eraser */
+  #stage::after{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background:
+      radial-gradient(38% 14% at 74% 20%, rgba(255,255,255,.05), transparent 70%),
+      radial-gradient(30% 20% at 20% 62%, rgba(255,255,255,.04), transparent 70%),
+      radial-gradient(26% 10% at 55% 88%, rgba(255,255,255,.045), transparent 70%);
+  }
+
+  .slide{
+    position:absolute;inset:0;
+    padding:60px 84px 104px;
+    display:flex;flex-direction:column;
+    opacity:0;visibility:hidden;transform:translateY(8px);
+    transition:opacity .3s ease,transform .3s ease,visibility 0s .3s;
+    z-index:2;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .3s ease,transform .3s ease}
+  @media (prefers-reduced-motion:reduce){.slide{transition:none}}
+
+  /* chalk text feel */
+  .slide *{text-shadow:0 0 1px rgba(255,255,255,.10), 0 1px 1px rgba(0,0,0,.25);}
+  .spacer{flex:1}
+
+  .eyebrow{font-size:19px;color:var(--blue);letter-spacing:.02em;margin-bottom:10px;
+    transform:rotate(-.6deg);transform-origin:left;opacity:.92}
+  h1{color:var(--yellow);font-size:56px;line-height:1.12;font-weight:400;max-width:1160px;
+    position:relative;transform:rotate(-.5deg);transform-origin:left}
+  h1.xl{font-size:72px;line-height:1.08;max-width:1200px}
+  .lede{font-size:24px;line-height:1.5;color:var(--dim);margin-top:24px;max-width:940px;
+    transform:rotate(.3deg);transform-origin:left}
+  .big{font-size:26px;line-height:1.5;color:var(--chalk);max-width:1040px;
+    transform:rotate(-.3deg);transform-origin:left}
+
+  /* board number, chalked in the corner */
+  .boardno{position:absolute;top:46px;right:78px;font-size:20px;color:var(--faint);
+    transform:rotate(1.4deg)}
+  .boardno u{text-decoration:none;border-bottom:2px solid var(--faint);padding-bottom:2px}
+
+  /* wobbly chalk underline (svg injected by JS) */
+  .uline{position:relative;display:inline-block}
+  .uline .u{position:absolute;left:-4px;right:-4px;bottom:-16px;width:calc(100% + 8px);height:18px;
+    overflow:visible;pointer-events:none}
+  /* rough ring around a key term */
+  .ring{position:relative;display:inline-block;white-space:nowrap}
+  .ring .frame{position:absolute;inset:-4px -14px;width:auto;height:auto}
+
+  /* sketch boxes (hand-drawn rectangle injected behind) */
+  .sketch{position:relative;padding:22px 24px}
+  .sketch>*{position:relative;z-index:1}
+  .sketch>.frame{z-index:0}
+  .frame{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .sketch h3{color:var(--yellow);font-size:22px;font-weight:400;margin-bottom:8px;line-height:1.15}
+  .sketch p{font-size:16.5px;line-height:1.48;color:var(--dim)}
+  .sketch .tag{display:block;font-size:14px;color:var(--blue);margin-bottom:8px;opacity:.9}
+  .sketch .num{font-size:34px;color:var(--yellow);line-height:1;margin-bottom:10px;display:block}
+
+  .row{display:flex;gap:22px;align-items:stretch}
+  .row.center{align-items:center}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+
+  /* hand-drawn arrow between concepts */
+  .harrow{flex:none;width:64px;height:34px;align-self:center}
+  .harrow path{fill:none;stroke:var(--chalk);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+
+  /* chalk-ruled grid / table */
+  .ruled{width:100%;border-collapse:collapse;margin-top:8px;position:relative}
+  .ruled th,.ruled td{padding:15px 18px;text-align:left;font-size:19px;font-weight:400;
+    border-bottom:1.5px dashed rgba(238,241,230,.28)}
+  .ruled th{color:var(--yellow);font-size:18px;border-bottom:2px solid rgba(244,232,184,.5)}
+  .ruled td.k{color:var(--chalk)}
+  .ruled td.m{color:var(--dim);font-size:18px}
+  .ruled td.c{text-align:center;color:var(--blue)}
+  .ruled tr td:first-child,.ruled tr th:first-child{padding-left:4px}
+  .ruled .yes{color:var(--yellow)}
+  .ruled .no{color:#e6b8b8}
+  .ruled .esc{color:var(--blue);font-size:16px}
+  .legend{font-size:16px;color:var(--faint);margin-top:14px;transform:rotate(.3deg)}
+
+  /* pipeline of stages */
+  .pipe{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:28px;color:var(--chalk)}
+  .pipe .st{color:var(--chalk)}
+  .pipe .st.dim{color:var(--faint)}
+  .pipe .st.hot{color:var(--yellow)}
+  .pipe .sep{color:var(--dim);font-size:24px}
+
+  /* fan diagram lines */
+  .fan line{stroke:var(--dim);stroke-width:2;stroke-linecap:round}
+
+  /* loop arrow svg */
+  .loopwrap{position:relative}
+  .loop{position:absolute;pointer-events:none}
+  .loop path{fill:none;stroke:var(--blue);stroke-width:2.4;stroke-linecap:round;opacity:.8}
+
+  /* eval report bits */
+  .barwrap{margin-top:14px}
+  .bartrack{height:16px;border:1.5px solid rgba(238,241,230,.5);border-radius:9px;overflow:hidden;background:rgba(0,0,0,.15)}
+  .barfill{height:100%;background:repeating-linear-gradient(90deg,var(--yellow) 0 8px,rgba(244,232,184,.7) 8px 12px)}
+  .fcat{display:flex;align-items:center;gap:14px;font-size:18px;color:var(--dim);margin-top:12px}
+  .fcat .lab{width:200px}
+  .fcat .track{flex:1;height:12px;border:1.5px solid rgba(238,241,230,.35);border-radius:7px;overflow:hidden}
+  .fcat .track i{display:block;height:100%;background:rgba(207,228,240,.75)}
+  .fcat b{width:22px;text-align:right;color:var(--chalk);font-weight:400}
+
+  /* wooden chalk tray with a chalk stub + eraser */
+  .tray{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:5;
+    background:linear-gradient(180deg,#5a4127 0%,#402c17 42%,#2c1d0e 100%);
+    box-shadow:inset 0 3px 0 rgba(255,220,170,.25), inset 0 -2px 6px rgba(0,0,0,.5), 0 -2px 8px rgba(0,0,0,.35);
+    border-top:1px solid rgba(255,220,170,.18)}
+  .tray .lip{position:absolute;top:0;left:0;right:0;height:9px;
+    background:linear-gradient(180deg,rgba(255,225,180,.35),transparent)}
+  .chalkstub{position:absolute;bottom:11px;left:210px;width:66px;height:15px;border-radius:4px;
+    background:linear-gradient(180deg,#fbfbf4,#dfe0d4);transform:rotate(-2.4deg);
+    box-shadow:0 3px 5px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.6)}
+  .chalkstub::after{content:"";position:absolute;right:-1px;top:0;width:9px;height:100%;border-radius:0 4px 4px 0;
+    background:linear-gradient(180deg,#f0d27a,#d9b85e)}
+  .eraser{position:absolute;bottom:11px;right:180px;width:118px;height:26px;transform:rotate(1.2deg)}
+  .eraser .felt{position:absolute;bottom:0;width:100%;height:16px;border-radius:2px;
+    background:linear-gradient(180deg,#3a4c8a,#2a3a6b);box-shadow:0 3px 6px rgba(0,0,0,.45)}
+  .eraser .wood{position:absolute;top:0;width:100%;height:12px;border-radius:2px 2px 0 0;
+    background:linear-gradient(180deg,#c98b46,#a06a2f)}
+  .eraser .felt::after{content:"";position:absolute;inset:0;opacity:.35;border-radius:2px;
+    background:radial-gradient(60% 80% at 30% 20%,rgba(255,255,255,.4),transparent 60%)}
+
+  .hint{position:fixed;bottom:8px;left:0;right:0;text-align:center;font-size:15px;
+    color:rgba(238,241,230,.4);font-family:"Chalkboard SE","Comic Sans MS",cursive}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1 · title -->
+<section class="slide">
+  <div class="boardno">Board <u>01 / 18</u></div>
+  <div class="spacer"></div>
+  <div class="eyebrow">an end-to-end playbook</div>
+  <h1 class="xl">AI Forward Deployed<br><span class="uline">Engineering.</span></h1>
+  <p class="lede">How intelligence enters a business — from discovery to a trusted production system. After the Varick Agents FDE methodology.</p>
+  <div class="spacer"></div>
+  <div class="big" style="opacity:.7;font-size:20px">Audit · Build · Evals · Deploy · Observe · Improve</div>
+</section>
+
+<!-- 2 · buy intelligence -->
+<section class="slide">
+  <div class="boardno">Board <u>02 / 18</u></div>
+  <div class="eyebrow">the premise</div>
+  <h1><span class="uline">Every company can now buy intelligence.</span></h1>
+  <div class="spacer"></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+    <div class="sketch" data-stroke="var(--yellow)" style="padding:16px 34px"><h3 style="margin:0;font-size:24px">A foundational model</h3></div>
+    <svg width="900" height="76" viewBox="0 0 900 76" class="fan" aria-hidden="true">
+      <line x1="450" y1="4" x2="150" y2="72"/><line x1="450" y1="4" x2="300" y2="72"/>
+      <line x1="450" y1="4" x2="450" y2="72"/><line x1="450" y1="4" x2="600" y2="72"/>
+      <line x1="450" y1="4" x2="750" y2="72"/>
+    </svg>
+    <div class="row" style="gap:18px">
+      <div class="sketch" style="padding:12px 22px"><h3 style="margin:0;font-size:18px">Company A</h3></div>
+      <div class="sketch" style="padding:12px 22px"><h3 style="margin:0;font-size:18px">Company B</h3></div>
+      <div class="sketch" style="padding:12px 22px"><h3 style="margin:0;font-size:18px">Company C</h3></div>
+      <div class="sketch" style="padding:12px 22px"><h3 style="margin:0;font-size:18px">Company D</h3></div>
+      <div class="sketch" style="padding:12px 22px"><h3 style="margin:0;font-size:18px">Company E</h3></div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">The same stack is available to anyone able to pay for it — every enterprise is already using it.</p>
+</section>
+
+<!-- 3 · statement -->
+<section class="slide">
+  <div class="boardno">Board <u>03 / 18</u></div>
+  <div class="spacer"></div>
+  <h1 class="xl">If everyone can access it,<br>intelligence alone cannot be<br>the <span class="ring">moat.</span></h1>
+  <p class="lede" style="margin-top:56px">The edge is no longer <em>who</em> has intelligence. It is <em>where</em>, <em>how</em>, and <em>why</em> they use it. Someone has to decide where intelligence belongs — and where it does not.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 4 · the role -->
+<section class="slide">
+  <div class="boardno">Board <u>04 / 18</u></div>
+  <div class="eyebrow">the role</div>
+  <h1>That person is the <span class="uline">forward deployed engineer.</span></h1>
+  <div class="spacer"></div>
+  <div class="row center">
+    <div class="sketch" style="flex:1"><span class="tag">business reality</span><p>How the work actually happens today — tools, people, exceptions, incentives, politics.</p></div>
+    <svg class="harrow" viewBox="0 0 64 34"><path class="_a"/></svg>
+    <div class="sketch" data-stroke="var(--yellow)" style="flex:1"><span class="tag">FDE judgment</span><p>Where intelligence belongs — and where it does not. The bridge across both sides of the aisle.</p></div>
+    <svg class="harrow" viewBox="0 0 64 34"><path class="_a"/></svg>
+    <div class="sketch" style="flex:1"><span class="tag">deployed AI system</span><p>Working software carrying real responsibility inside the business.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">The best combination of consultant and engineer — not the average of the two. In demand because they control how intelligence enters the business.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 5 · operating loop -->
+<section class="slide">
+  <div class="boardno">Board <u>05 / 18</u></div>
+  <div class="eyebrow">the operating loop</div>
+  <h1><span class="uline">Six stages. One loop.</span></h1>
+  <div class="spacer"></div>
+  <div class="loopwrap" style="align-self:center">
+    <div class="pipe" style="justify-content:center;font-size:30px">
+      <span class="st">Audit</span><span class="sep">→</span><span class="st">Build</span><span class="sep">→</span>
+      <span class="st">Evals</span><span class="sep">→</span><span class="st">Deploy</span><span class="sep">→</span>
+      <span class="st">Observe</span><span class="sep">→</span><span class="st">Improve</span>
+    </div>
+    <svg class="loop" style="left:-30px;right:-30px;top:44px;width:calc(100% + 60px);height:90px" viewBox="0 0 900 90" preserveAspectRatio="none">
+      <path d="M880,10 C900,55 850,82 620,82 C400,82 200,84 40,80 C6,78 6,44 24,20" vector-effect="non-scaling-stroke"/>
+      <path d="M24,20 l-9,16 M24,20 l16,7" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <div style="text-align:center;margin-top:104px;color:var(--blue);font-size:18px">↻ improving one workflow exposes the next bottleneck</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="grid3">
+    <div class="sketch"><span class="tag">the job · part 1</span><h3>Audit</h3><p>Find the right problem, map reality — the consulting half.</p></div>
+    <div class="sketch"><span class="tag">the job · part 2</span><h3>Evals</h3><p>Prove it behaves before it carries responsibility.</p></div>
+    <div class="sketch"><span class="tag">the job · part 3</span><h3>Deploy</h3><p>Make it work inside the business — adoption, nothing breaks.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big" style="color:var(--yellow)">Each stage earns the right to the next.</p>
+</section>
+
+<!-- 6 · discovery: real process -->
+<section class="slide">
+  <div class="boardno">Board <u>06 / 18</u></div>
+  <div class="eyebrow">phase 1 · discovery</div>
+  <h1><span class="uline">The documented process is rarely the real process.</span></h1>
+  <p class="lede" style="font-size:21px">Ask, and you hear "an email arrives." Watch, and every simple step hides the real work.</p>
+  <div class="spacer"></div>
+  <div class="row" style="gap:6px;align-items:stretch">
+    <div class="sketch" style="flex:1"><span class="tag">01 · trigger</span><h3 style="font-size:19px">Email arrives</h3><p style="font-size:15px">40+ senders, no two alike. Routing lives in one head.</p></div>
+    <svg class="harrow" style="width:42px" viewBox="0 0 64 34"><path class="_a"/></svg>
+    <div class="sketch" style="flex:1"><span class="tag">02 · re-keyed</span><h3 style="font-size:19px">Into a spreadsheet</h3><p style="font-size:15px">Which one? There are four. A typo becomes truth.</p></div>
+    <svg class="harrow" style="width:42px" viewBox="0 0 64 34"><path class="_a"/></svg>
+    <div class="sketch" style="flex:1"><span class="tag">03 · tribal</span><h3 style="font-size:19px">Internal system</h3><p style="font-size:15px">No API. "Status" means five things. The expert retires soon.</p></div>
+    <svg class="harrow" style="width:42px" viewBox="0 0 64 34"><path class="_a"/></svg>
+    <div class="sketch" style="flex:1"><span class="tag">04 · a reply</span><h3 style="font-size:19px">Approved in Slack</h3><p style="font-size:15px">The record of approval is a chat message.</p></div>
+    <svg class="harrow" style="width:42px" viewBox="0 0 64 34"><path class="_a"/></svg>
+    <div class="sketch" style="flex:1"><span class="tag">05 · 30 fields</span><h3 style="font-size:19px">Into the ERP</h3><p style="font-size:15px">The official system arrives last, fed by all of the above.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">Don't look, and you build for a system that doesn't map to reality — how most AI pilots fail.</p>
+</section>
+
+<!-- 7 · discovery fieldcraft -->
+<section class="slide">
+  <div class="boardno">Board <u>07 / 18</u></div>
+  <div class="eyebrow">phase 1 · discovery</div>
+  <h1><span class="uline">Sit with the work, not the org chart.</span></h1>
+  <div class="spacer"></div>
+  <div class="grid4">
+    <div class="sketch"><h3>Shadow full days</h3><p>In an hour, people describe the job they think they have. Beside them for eight, the real exception happens.</p></div>
+    <div class="sketch"><h3>Get system access</h3><p>ERP, CRM, the four spreadsheets, the Slack approvals. Read the real artifacts, not the SOP.</p></div>
+    <div class="sketch"><h3>Expect many owners</h3><p>Several people run the "same" process differently. One source is a sample of one — sit with more.</p></div>
+    <div class="sketch"><h3>Chase exceptions</h3><p>One way to go right, a thousand to go wrong. The unwritten rules are the actual spec.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">Discovery is where <span class="ring">trust</span> is built — the relationship is infrastructure for everything that follows.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 8 · operating map -->
+<section class="slide">
+  <div class="boardno">Board <u>08 / 18</u></div>
+  <div class="eyebrow">phase 2 · audit</div>
+  <h1><span class="uline">Produce the operating map.</span></h1>
+  <p class="lede" style="font-size:21px">Collect context → trace findings → one decision artifact the business can act on.</p>
+  <div class="spacer"></div>
+  <table class="ruled">
+    <tr><th colspan="2">The audit artifact — one operating map</th></tr>
+    <tr><td class="k">Current-state workflow</td><td class="m">How the work actually happens today</td></tr>
+    <tr><td class="k">Future-state workflow</td><td class="m">The same work, rebuilt around AI</td></tr>
+    <tr><td class="k">Selected use case</td><td class="m">One workflow, chosen for value</td></tr>
+    <tr><td class="k">Boundaries</td><td class="m">What the system may and may not do</td></tr>
+    <tr><td class="k">Expected business value</td><td class="m">Hours, cost, and errors — quantified</td></tr>
+  </table>
+  <div class="spacer"></div>
+  <p class="big">The audit is a product in its own right — a cleanly mapped department with an ROI matrix is worth money before anything is built.</p>
+</section>
+
+<!-- 9 · automate or not -->
+<section class="slide">
+  <div class="boardno">Board <u>09 / 18</u></div>
+  <div class="eyebrow">phase 2 · audit</div>
+  <h1>Decide what should be automated — <span class="uline">and what should not.</span></h1>
+  <div class="spacer"></div>
+  <div class="grid3">
+    <div class="sketch"><h3>Deterministic software</h3><p>When rules and inputs are predictable. Most of a good solution is this — don't spend a model on an if-statement.</p></div>
+    <div class="sketch" data-stroke="var(--yellow)"><h3>An agent</h3><p>When the objective is clear but inputs, path, or actions vary. Often only 3 of 10 steps need judgment.</p></div>
+    <div class="sketch"><h3>A human in control</h3><p>When the decision carries material ambiguity, accountability, or irreversible consequences.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">Some workflows shouldn't be touched at all. Prioritize lengthy, high-volume ones where the improvement is large enough to matter.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 10 · three buckets -->
+<section class="slide">
+  <div class="boardno">Board <u>10 / 18</u></div>
+  <div class="eyebrow">phase 2 · audit</div>
+  <h1>A business measures exactly <span class="ring">three things.</span></h1>
+  <div class="spacer"></div>
+  <div class="grid3">
+    <div class="sketch"><span class="num">1</span><h3>Revenue uplift</h3><p>Reach customers faster, drive more value per customer, unlock throughput the old process capped.</p></div>
+    <div class="sketch"><span class="num">2</span><h3>Risk mitigation</h3><p>Fewer errors, auditable decisions, escalation by rule — silent failures now leave evidence.</p></div>
+    <div class="sketch"><span class="num">3</span><h3>Cost savings</h3><p>Hours returned, rework eliminated, cost per run measured and driven down.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">Every expected-value claim in the operating map lands in one of these buckets — quantified, not vibes.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 11 · statement: unhappy paths -->
+<section class="slide">
+  <div class="boardno">Board <u>11 / 18</u></div>
+  <div class="eyebrow">phase 3 · build</div>
+  <div class="spacer"></div>
+  <h1 class="xl">Build for the <span class="ring">unhappy paths.</span></h1>
+  <p class="lede" style="margin-top:34px">One way something goes right, a thousand ways it goes wrong. An agent built for the happy path is worth nothing — the one that handles the exceptions is worth deploying.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 12 · build architecture -->
+<section class="slide">
+  <div class="boardno">Board <u>12 / 18</u></div>
+  <div class="eyebrow">phase 3 · build</div>
+  <h1><span class="uline">Add capability in this order.</span></h1>
+  <div class="spacer"></div>
+  <div class="grid4" style="gap:18px">
+    <div class="sketch"><span class="num">1</span><h3 style="font-size:20px">Agent loop</h3><p style="font-size:15px">Prompt → model → response → next, until done or max-step.</p></div>
+    <div class="sketch"><span class="num">2</span><h3 style="font-size:20px">Tool use</h3><p style="font-size:15px">Start minimal — one call, one search. The agent decides when.</p></div>
+    <div class="sketch"><span class="num">3</span><h3 style="font-size:20px">Guardrails</h3><p style="font-size:15px">Input validation · max-step limit · output filtering.</p></div>
+    <div class="sketch"><span class="num">4</span><h3 style="font-size:20px">Audit trail</h3><p style="font-size:15px">Log every prompt, call, result, error. No traces, no trust.</p></div>
+    <div class="sketch"><span class="num">5</span><h3 style="font-size:20px">Structured out</h3><p style="font-size:15px">A JSON schema, validated each response. Retry or escalate.</p></div>
+    <div class="sketch"><span class="num">6</span><h3 style="font-size:20px">State &amp; recovery</h3><p style="font-size:15px">Checkpoint often. Kill it — it must resume where it stopped.</p></div>
+    <div class="sketch"><span class="num">7</span><h3 style="font-size:20px">Failure handling</h3><p style="font-size:15px">Missing data, dead APIs, timeouts, dupes — behavior for each.</p></div>
+    <div class="sketch"><span class="num">8</span><h3 style="font-size:20px">Retries + backoff</h3><p style="font-size:15px">Exponential: 1·2·4·8s, capped. Escalate when they run out.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">Pick one model and one agent platform and get genuinely good at it — your value is judgment about the workflow, not the inference layer.</p>
+</section>
+
+<!-- 13 · evals matrix -->
+<section class="slide">
+  <div class="boardno">Board <u>13 / 18</u></div>
+  <div class="eyebrow">phase 4 · evals</div>
+  <h1><span class="uline">Turn non-determinism into evidence.</span></h1>
+  <p class="lede" style="font-size:20px">A golden dataset of real cases with hand-labeled ideal outputs — graded on four dimensions.</p>
+  <div class="spacer"></div>
+  <table class="ruled">
+    <tr><th>The evaluation cases</th><th style="text-align:center">Right data</th><th style="text-align:center">Required steps</th><th style="text-align:center">Matches expert</th><th style="text-align:center">Safe to act</th></tr>
+    <tr><td class="k">The normal case</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">The edge case</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c no">✗</td></tr>
+    <tr><td class="k">Incomplete information</td><td class="c no">✗</td><td class="c">—</td><td class="c">—</td><td class="c esc">→ human</td></tr>
+    <tr><td class="k">An ambiguous request</td><td class="c yes">✓</td><td class="c no">✗</td><td class="c">—</td><td class="c esc">→ human</td></tr>
+    <tr><td class="k">A high-risk action</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c esc">→ human</td></tr>
+  </table>
+  <div class="legend">✓ expected &nbsp;·&nbsp; ✗ failure, evidence kept &nbsp;·&nbsp; → human escalated by rule</div>
+  <div class="spacer"></div>
+  <p class="big" style="color:var(--yellow)">No evidence, no autonomy — the eval suite earns the system its next level of authority.</p>
+</section>
+
+<!-- 14 · eval report -->
+<section class="slide">
+  <div class="boardno">Board <u>14 / 18</u></div>
+  <div class="eyebrow">phase 4 · evals</div>
+  <h1><span class="uline">Failed runs are the product.</span></h1>
+  <div class="spacer"></div>
+  <div class="row" style="gap:34px;align-items:stretch">
+    <div class="sketch" style="flex:1.05"><span class="tag">the evaluation report</span>
+      <div style="font-size:46px;color:var(--yellow);line-height:1">41 <span style="font-size:20px;color:var(--dim)">/ 50 graded runs passed — 82%</span></div>
+      <div class="barwrap"><div class="bartrack"><div class="barfill" style="width:82%"></div></div></div>
+      <div style="font-size:16px;color:var(--blue);margin:20px 0 6px">failure categories — 9 runs</div>
+      <div class="fcat"><span class="lab">missing data</span><div class="track"><i style="width:100%"></i></div><b>5</b></div>
+      <div class="fcat"><span class="lab">wrong record pulled</span><div class="track"><i style="width:80%"></i></div><b>4</b></div>
+    </div>
+    <div class="sketch" style="flex:.95"><span class="tag">operating rules</span>
+      <p style="margin-top:6px"><b style="color:var(--yellow)">Confidence.</b> Below 0.80, the system must escalate.</p>
+      <p style="margin-top:12px"><b style="color:var(--yellow)">Escalation.</b> High-risk actions always reach a person — by rule.</p>
+      <p style="margin-top:12px"><b style="color:var(--yellow)">Readiness.</b> An honest maturity statement: "pilot — human review on every action."</p>
+      <p style="margin-top:12px"><b style="color:var(--yellow)">Subjective work.</b> Past examples define "good"; human feedback keeps improving the harness.</p>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">Investigate every failure, categorize it, feed it back. That is what turning non-determinism into evidence means.</p>
+</section>
+
+<!-- 15 · deployment -->
+<section class="slide">
+  <div class="boardno">Board <u>15 / 18</u></div>
+  <div class="eyebrow">phase 5 · deployment</div>
+  <h1><span class="uline">Make it work inside the business.</span></h1>
+  <div class="spacer"></div>
+  <div class="grid3">
+    <div class="sketch"><span class="num">1</span><h3>Integrate with what exists</h3><p>Never open with "first, migrate off your ERP." Build on top of the current stack — that's the edge over rip-and-replace.</p></div>
+    <div class="sketch"><span class="num">2</span><h3>Test in a controlled env</h3><p>A sandbox inside the company's own infrastructure, where you can run, inspect, and debug safely.</p></div>
+    <div class="sketch"><span class="num">3</span><h3>Increase autonomy gradually</h3><p>Shadow → approve every action → approve only risky ones → autonomy where earned. Smallest useful action first.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">The pattern to push for: agent handles intake, validation, drafting — a human approves — the system completes the rest.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 16 · adoption & trust -->
+<section class="slide">
+  <div class="boardno">Board <u>16 / 18</u></div>
+  <div class="eyebrow">phase 5 · deployment</div>
+  <h1>Deployment is a people problem <span class="uline">wearing a software costume.</span></h1>
+  <div class="spacer"></div>
+  <div class="row" style="gap:28px">
+    <div class="sketch" style="flex:1"><h3>You are a risk to your sponsor</h3><p>Status quo is safe; bringing you in is not — if it fails, it's their name on it. De-risk them: visible traces, approval gates, gradual autonomy, measurable checkpoints. Prove value before asking for trust.</p></div>
+    <div class="sketch" style="flex:1"><h3>Your job is to get them promoted</h3><p>Drive value in the three buckets and make it attributable, so at review time they can point at it. Face to face makes every hard conversation easier — the relationship is infrastructure.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">When production breaks, it's <span class="ring">your</span> name on the line: know who to call, what to do, how to fix it.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 17 · the loop again -->
+<section class="slide">
+  <div class="boardno">Board <u>17 / 18</u></div>
+  <div class="eyebrow">phase 6 · observe &amp; improve</div>
+  <h1><span class="uline">The loop runs again.</span></h1>
+  <p class="lede" style="font-size:21px">Watch production — metrics, failure categories, cost per run. Feed failures back into the golden dataset and the harness.</p>
+  <div class="spacer"></div>
+  <div class="pipe" style="justify-content:center;font-size:30px">
+    <span class="st dim">Audit</span><span class="sep">→</span><span class="st dim">Build</span><span class="sep">→</span>
+    <span class="st dim">Evals</span><span class="sep">→</span><span class="st dim">Deploy</span><span class="sep">→</span>
+    <span class="st hot">Observe</span><span class="sep">→</span><span class="st hot">Improve</span><span class="sep" style="color:var(--blue)">↻</span>
+  </div>
+  <div class="spacer"></div>
+  <p class="big">Bottlenecks are interconnected: fixing one workflow exposes the constraint upstream and frees capacity downstream. The next engagement is usually visible from inside the first — how one workflow becomes the whole business.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- 18 · closing -->
+<section class="slide">
+  <div class="boardno">Board <u>18 / 18</u></div>
+  <div class="eyebrow">the job</div>
+  <div class="spacer"></div>
+  <h1 class="xl">An FDE owns the path from<br>messy workflow to a <span class="uline">trusted<br>production system.</span></h1>
+  <p class="lede" style="margin-top:34px">Audit → Build → Evals → Deploy → Observe → Improve. Each stage earns the right to the next — and the loop runs again.</p>
+  <div class="spacer"></div>
+</section>
+
+<!-- wooden chalk tray + chalk stub + eraser -->
+<div class="tray"><div class="lip"></div><div class="chalkstub"></div>
+  <div class="eraser"><div class="wood"></div><div class="felt"></div></div>
+</div>
+
+</div></div>
+<div class="hint">← → navigate · click to advance</div>
+
+<script>
+  /* ---- inject hand-drawn chalk decorations ---- */
+  const rectPaths=[
+    "M3,5 C26,2 56,6 97,3 C99,32 96,66 98,96 C58,99 30,96 2,98 C4,62 1,34 3,5 Z",
+    "M2,4 C30,7 60,2 98,5 C96,34 99,64 97,97 C64,95 32,98 3,96 C5,63 2,33 2,4 Z",
+    "M4,3 C28,6 58,3 96,4 C98,30 95,68 97,98 C60,95 28,98 3,97 C6,66 3,32 4,3 Z"
+  ];
+  const ellPaths=[
+    "M50,7 C79,6 96,26 96,50 C96,75 76,95 50,95 C23,95 5,73 5,49 C6,26 22,8 50,7",
+    "M52,6 C80,8 95,28 95,51 C95,76 74,94 49,94 C22,94 6,71 6,48 C7,25 24,6 52,6"
+  ];
+  const ulPaths=[
+    "M1,7 C20,3 40,10 60,5 C78,1 90,9 99,5",
+    "M1,5 C24,9 46,2 66,7 C82,11 92,4 99,6",
+    "M1,6 C22,2 44,9 64,4 C80,1 91,8 99,5"
+  ];
+  let seed=7;
+  const pick=a=>{seed=(seed*1103515245+12345)&0x7fffffff;return a[seed%a.length]};
+
+  const svgNS="http://www.w3.org/2000/svg";
+  function frame(cls,vb,d,stroke,sw){
+    const s=document.createElementNS(svgNS,"svg");
+    s.setAttribute("class",cls);s.setAttribute("viewBox",vb);s.setAttribute("preserveAspectRatio","none");
+    const p=document.createElementNS(svgNS,"path");
+    p.setAttribute("d",d);p.setAttribute("fill","none");p.setAttribute("stroke",stroke);
+    p.setAttribute("stroke-width",sw);p.setAttribute("stroke-linecap","round");
+    p.setAttribute("stroke-linejoin","round");p.setAttribute("vector-effect","non-scaling-stroke");
+    p.setAttribute("opacity","0.9");s.appendChild(p);return s;
+  }
+  // sketch rectangles
+  document.querySelectorAll('.sketch').forEach(el=>{
+    const stroke=el.getAttribute('data-stroke')||'rgba(238,241,230,.78)';
+    el.insertBefore(frame('frame','0 0 100 100',pick(rectPaths),stroke,'1.8'),el.firstChild);
+  });
+  // rings around key terms
+  document.querySelectorAll('.ring').forEach(el=>{
+    el.insertBefore(frame('frame','0 0 100 100',pick(ellPaths),'var(--yellow)','2.2'),el.firstChild);
+  });
+  // wobbly underlines
+  document.querySelectorAll('.uline').forEach(el=>{
+    const s=document.createElementNS(svgNS,"svg");
+    s.setAttribute("class","u");s.setAttribute("viewBox","0 0 100 10");s.setAttribute("preserveAspectRatio","none");
+    const p=document.createElementNS(svgNS,"path");
+    p.setAttribute("d",pick(ulPaths));p.setAttribute("fill","none");
+    p.setAttribute("stroke","var(--yellow)");p.setAttribute("stroke-width","3");
+    p.setAttribute("stroke-linecap","round");p.setAttribute("vector-effect","non-scaling-stroke");
+    p.setAttribute("opacity","0.92");s.appendChild(p);el.appendChild(s);
+  });
+  // hand-drawn arrows
+  document.querySelectorAll('.harrow ._a').forEach(p=>{
+    p.setAttribute("d","M4,17 C22,13 40,21 54,17 M46,9 L56,17 L46,25");
+  });
+
+  /* ---- nav + scale ---- */
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>

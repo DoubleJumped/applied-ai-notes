@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — brutalist playbook</title>
+<style>
+  :root{
+    --ink:#000;
+    --paper:#ffffff;
+    --yellow:#ffe600;
+    --blue:#0000ee;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:Helvetica,"Helvetica Neue",Arial,sans-serif;
+    background:#e9e9e6;
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;position:relative;flex:none;background:var(--paper)}
+
+  .slide{
+    position:absolute;inset:0;
+    background:var(--paper);
+    padding:46px 58px 40px;
+    opacity:0;visibility:hidden;
+    display:flex;flex-direction:column;
+    /* faint construction grid — anti-polish honesty */
+    background-image:
+      linear-gradient(rgba(0,0,0,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,0,0,.035) 1px,transparent 1px);
+    background-size:80px 80px,80px 80px;
+  }
+  .slide.active{opacity:1;visibility:visible}
+
+  /* ---- mono metadata ---------------------------------------------------- */
+  .mono{font-family:Menlo,"SF Mono",Consolas,monospace}
+  .toprow{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+  .kicker{
+    font-family:Menlo,"SF Mono",Consolas,monospace;
+    font-size:14px;font-weight:700;letter-spacing:.04em;
+    background:var(--ink);color:#fff;padding:8px 14px;
+    display:inline-block;
+  }
+  .ts{
+    font-family:Menlo,"SF Mono",Consolas,monospace;
+    font-size:12px;line-height:1.5;color:#000;text-align:right;
+    border:3px solid #000;padding:7px 11px;background:#fff;
+    box-shadow:5px 5px 0 #000;
+  }
+  .ts b{background:var(--yellow);padding:0 3px}
+
+  /* ---- headline --------------------------------------------------------- */
+  .hbox{
+    border:3px solid #000;background:#fff;box-shadow:6px 6px 0 #000;
+    padding:18px 26px 22px;margin-top:26px;position:relative;
+  }
+  h1{font-weight:700;line-height:1.0;letter-spacing:-.03em;font-size:76px}
+  h1.xl{font-size:100px;line-height:1.04}
+  h1.xxl{font-size:118px;line-height:1.0}
+  h1.sm{font-size:60px;line-height:1.02}
+  .mark{background:var(--yellow);box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:.04em .12em;}
+  .lnk{color:var(--blue);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:2px;font-weight:700}
+  .lede{font-size:21px;line-height:1.42;max-width:1000px;margin-top:20px;font-weight:500}
+  .lede .mark{font-weight:700}
+
+  .spacer{flex:1}
+  .fill{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+  /* ---- footer ----------------------------------------------------------- */
+  .foot{
+    display:flex;align-items:center;gap:16px;margin-top:26px;
+    font-family:Menlo,"SF Mono",Consolas,monospace;font-size:12px;
+    border-top:3px solid #000;padding-top:12px;
+  }
+  .foot .fp{font-weight:700;letter-spacing:.02em}
+  .strip{display:flex;gap:6px;flex-wrap:wrap;margin-left:6px}
+  .strip i{font-style:normal;color:#9a9a9a;letter-spacing:.02em}
+  .strip i.on{background:var(--yellow);color:#000;padding:2px 6px;font-weight:700}
+  .pg{margin-left:auto;font-weight:700;background:#000;color:#fff;padding:5px 10px;letter-spacing:.06em}
+
+  /* ---- reusable boxes --------------------------------------------------- */
+  .box{border:3px solid #000;background:#fff;box-shadow:6px 6px 0 #000;border-radius:0}
+
+  .grid{display:grid;gap:20px}
+  .card{
+    border:3px solid #000;background:#fff;box-shadow:6px 6px 0 #000;
+    padding:18px 18px 16px;display:flex;flex-direction:column;
+  }
+  .card .tag{font-family:Menlo,monospace;font-size:11px;font-weight:700;letter-spacing:.02em;
+    background:#000;color:#fff;padding:3px 7px;align-self:flex-start;margin-bottom:11px}
+  .card .num{font-size:44px;font-weight:700;line-height:1;letter-spacing:-.04em;margin-bottom:8px}
+  .card h3{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px;line-height:1.02}
+  .card p{font-size:14px;line-height:1.42;font-weight:500}
+  .card.hl{background:var(--yellow)}
+  .card.hl .tag{background:#000}
+
+  /* columns with big arrows */
+  .flow{display:flex;align-items:stretch;gap:0;margin-top:34px}
+  .flow .col{
+    flex:1;border:3px solid #000;background:#fff;box-shadow:6px 6px 0 #000;padding:24px 22px;
+  }
+  .flow .col.hl{background:var(--yellow)}
+  .flow .col .tag{font-family:Menlo,monospace;font-size:12px;font-weight:700;letter-spacing:.02em;
+    display:block;margin-bottom:12px;border-bottom:3px solid #000;padding-bottom:8px}
+  .flow .col p{font-size:16px;line-height:1.5;font-weight:500}
+  .flow .arw{align-self:center;font-size:72px;font-weight:700;line-height:.6;padding:0 8px;flex:none}
+
+  /* pipeline */
+  .pipe{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .pipe .stg{border:3px solid #000;background:#fff;box-shadow:5px 5px 0 #000;
+    padding:14px 20px;font-size:26px;font-weight:700;letter-spacing:-.02em}
+  .pipe .stg.on{background:var(--yellow)}
+  .pipe .stg.dim{color:#000;background:#fff;opacity:.5;box-shadow:none;border-color:#000}
+  .pipe .arw{font-size:44px;font-weight:700;line-height:.6}
+  .loopback{font-family:Menlo,monospace;font-size:14px;font-weight:700;margin-top:20px;
+    background:var(--yellow);display:inline-block;padding:8px 12px;border:3px solid #000}
+
+  .statement{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
+  .bigline{font-size:22px;line-height:1.4;font-weight:600;max-width:1150px}
+  .bigline .mark{font-weight:700}
+
+  /* diagram slide 2 */
+  .diag{margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:0}
+  .node{border:3px solid #000;background:#fff;box-shadow:5px 5px 0 #000;
+    padding:12px 26px;font-family:Menlo,monospace;font-size:14px;font-weight:700;letter-spacing:.02em}
+  .node.top{background:#000;color:#fff}
+  .row5{display:flex;gap:22px}
+  .row5 .node{font-size:12px;padding:10px 16px;box-shadow:5px 5px 0 #000}
+  .row5 .node.hl{background:var(--yellow)}
+  .fan{width:940px;height:64px}
+  .fan line{stroke:#000;stroke-width:3}
+
+  /* tables */
+  table.brut{border-collapse:collapse;width:100%;margin-top:22px;
+    border:3px solid #000;box-shadow:6px 6px 0 #000;background:#fff}
+  table.brut th{background:var(--yellow);color:#000;text-align:left;
+    font-family:Menlo,monospace;font-size:13px;font-weight:700;letter-spacing:.02em;
+    padding:13px 16px;border:3px solid #000}
+  table.brut td{border:3px solid #000;padding:13px 16px;vertical-align:top;font-size:16px;font-weight:500}
+  table.brut td.k{font-weight:700}
+  table.brut td.c{text-align:center;font-weight:700;font-family:Menlo,monospace;white-space:nowrap}
+  table.brut td.esc{background:var(--yellow);font-weight:700;font-family:Menlo,monospace}
+  .legend{font-family:Menlo,monospace;font-size:13px;font-weight:600;margin-top:14px}
+
+  /* report slide */
+  .report{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;margin-top:24px}
+  .panel{border:3px solid #000;background:#fff;box-shadow:6px 6px 0 #000}
+  .panel .head{background:#000;color:#fff;font-family:Menlo,monospace;font-size:13px;
+    font-weight:700;letter-spacing:.02em;padding:11px 16px}
+  .panel .pbody{padding:18px 18px}
+  .pass{font-size:64px;font-weight:700;letter-spacing:-.04em;line-height:.9}
+  .pass small{font-size:16px;font-weight:600;letter-spacing:0}
+  .barwrap{height:26px;border:3px solid #000;margin-top:12px;background:#fff;padding:0}
+  .barwrap i{display:block;height:100%;background:var(--yellow)}
+  .rowlab{font-family:Menlo,monospace;font-size:12px;font-weight:700;margin:18px 0 10px}
+  .fcat{display:flex;align-items:center;gap:12px;font-size:15px;margin-top:10px;font-weight:600}
+  .fcat .fbar{flex:1;height:18px;border:3px solid #000;background:#fff}
+  .fcat .fbar i{display:block;height:100%;background:#000}
+  .fcat b{width:20px;text-align:right;font-family:Menlo,monospace}
+  .rule{display:grid;grid-template-columns:120px 1fr;gap:12px;font-size:14.5px;margin-top:11px;line-height:1.4;font-weight:500}
+  .rule b{font-family:Menlo,monospace;font-size:11px;font-weight:700;background:var(--yellow);padding:2px 5px;align-self:start}
+
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:30px}
+  .duo .card{padding:24px 24px}
+  .duo .card h3{font-size:23px;margin-bottom:12px}
+  .duo .card p{font-size:16px;line-height:1.5}
+
+  .hint{position:fixed;bottom:8px;left:0;right:0;text-align:center;
+    font-family:Menlo,monospace;font-size:11px;font-weight:600;color:#7a7a78;letter-spacing:.04em}
+
+  .rot1{transform:rotate(-1.4deg)}
+  .rot2{transform:rotate(1.6deg)}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1 · title -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.00 — OVERVIEW</span>
+    <div class="ts mono">FILE fde-playbook.deck<br>MODIFIED <b>2026&#8209;07&#8209;21 08:02</b> · REV 4</div>
+  </div>
+  <div class="fill">
+    <div class="hbox rot1" style="align-self:flex-start;max-width:1240px">
+      <div class="mono" style="font-size:15px;font-weight:700;margin-bottom:14px">AN END-TO-END PLAYBOOK →</div>
+      <h1 class="xxl">AI FORWARD<br>DEPLOYED<br><span class="mark">ENGINEERING</span></h1>
+    </div>
+    <p class="lede" style="margin-top:34px">How intelligence enters a business — from <span class="lnk">discovery</span> to a trusted production system. Synthesized from the Varick Agents FDE methodology.</p>
+  </div>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i class="on">OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[01/18]</span>
+  </div>
+</section>
+
+<!-- 2 · buy intelligence -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.00 — THE PREMISE</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:05</b> · REV 4</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start;max-width:1300px">
+    <h1 class="sm">Every company can now <span class="mark">buy intelligence.</span></h1>
+  </div>
+  <p class="lede">The same foundational capability is available to anyone able to pay for it — and every enterprise is already using the same stack.</p>
+  <div class="diag">
+    <div class="node top">A FOUNDATIONAL MODEL</div>
+    <svg class="fan" viewBox="0 0 940 64" aria-hidden="true">
+      <line x1="470" y1="0" x2="150" y2="64"/><line x1="470" y1="0" x2="310" y2="64"/>
+      <line x1="470" y1="0" x2="470" y2="64"/><line x1="470" y1="0" x2="630" y2="64"/>
+      <line x1="470" y1="0" x2="790" y2="64"/>
+    </svg>
+    <div class="row5">
+      <div class="node">COMPANY A</div><div class="node">COMPANY B</div><div class="node hl">COMPANY C</div><div class="node">COMPANY D</div><div class="node">COMPANY E</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i class="on">OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[02/18]</span>
+  </div>
+</section>
+
+<!-- 3 · statement -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.00 — THE PREMISE</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:07</b> · REV 4</div>
+  </div>
+  <div class="fill">
+    <div class="hbox rot1" style="align-self:flex-start;max-width:1360px;background:var(--yellow)">
+      <h1 class="xl">If everyone can access it, intelligence alone <span style="background:#000;color:var(--yellow);padding:0 .1em">cannot be the moat.</span></h1>
+    </div>
+    <p class="lede" style="margin-top:30px">The edge is no longer who <em>has</em> intelligence. It is <span class="lnk">where, how, and why</span> they use it. Someone has to decide where intelligence belongs — and where it does not.</p>
+  </div>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i class="on">OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[03/18]</span>
+  </div>
+</section>
+
+<!-- 4 · the role -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.00 — THE ROLE</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:11</b> · REV 5</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start;max-width:1340px">
+    <h1 class="sm">That person is the <span class="mark">forward deployed engineer.</span></h1>
+  </div>
+  <div class="flow">
+    <div class="col"><span class="tag">BUSINESS REALITY</span><p>How the work actually happens today — tools, people, exceptions, incentives, politics.</p></div>
+    <div class="arw">→</div>
+    <div class="col hl"><span class="tag">FDE JUDGMENT</span><p>Where intelligence belongs, and where it does not. The bridge between both sides of the aisle.</p></div>
+    <div class="arw">→</div>
+    <div class="col"><span class="tag">DEPLOYED AI SYSTEM</span><p>Working software carrying real responsibility inside the business.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">The best combination of consultant and engineer — <span class="mark">not the average of the two.</span> FDEs are in demand because they control how intelligence enters the business.</p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i class="on">OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[04/18]</span>
+  </div>
+</section>
+
+<!-- 5 · operating loop -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.00 — OPERATING LOOP</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:19</b> · REV 5</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">Six stages. <span class="mark">One loop.</span></h1></div>
+  <div class="pipe">
+    <span class="stg on">Audit</span><span class="arw">→</span><span class="stg dim">Build</span><span class="arw">→</span><span class="stg">Evals</span><span class="arw">→</span><span class="stg">Deploy</span><span class="arw">→</span><span class="stg dim">Observe</span><span class="arw">→</span><span class="stg dim">Improve</span>
+  </div>
+  <div class="loopback mono">↻ THE LOOP RUNS AGAIN — IMPROVING ONE WORKFLOW EXPOSES THE NEXT BOTTLENECK</div>
+  <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-top:24px">
+    <div class="card"><span class="tag">THE JOB · PART 1</span><h3>Audit</h3><p>Identifies the right problem and maps reality — the consulting half of the role.</p></div>
+    <div class="card"><span class="tag">THE JOB · PART 2</span><h3>Evals</h3><p>Prove the system behaves correctly before it carries real responsibility.</p></div>
+    <div class="card"><span class="tag">THE JOB · PART 3</span><h3>Deployment</h3><p>Makes it work inside the business — adoption, monitoring, nothing breaking.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <div class="statement">Each stage <span class="mark">earns the right</span> to the next.</div>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i class="on">OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[05/18]</span>
+  </div>
+</section>
+
+<!-- 6 · discovery: real process -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.01 — DISCOVERY</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:26</b> · REV 6</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start;max-width:1380px"><h1 class="sm">The documented process is <span class="mark">rarely the real process.</span></h1></div>
+  <p class="lede">Ask, and you'll hear "an email arrives." Watch, and every simple step hides the real work.</p>
+  <div class="grid" style="grid-template-columns:repeat(5,1fr);margin-top:22px">
+    <div class="card"><span class="tag">01 · TRIGGER</span><h3>An email arrives</h3><p>40+ senders, no two alike. Half are exceptions in disguise. Routing lives in one person's head.</p></div>
+    <div class="card"><span class="tag">02 · RE-KEYED</span><h3>Copied to a sheet</h3><p>Which spreadsheet? There are four. A typo doesn't error — it becomes the new source of truth.</p></div>
+    <div class="card"><span class="tag">03 · TRIBAL</span><h3>Checked internally</h3><p>No API, no export. "Status" means five things. The one expert retires in eight months.</p></div>
+    <div class="card"><span class="tag">04 · A REPLY</span><h3>Approved in Slack</h3><p>The approval of record is a chat message, findable only by the person who asked for it.</p></div>
+    <div class="card"><span class="tag">05 · 30 FIELDS</span><h3>Entered in the ERP</h3><p>The official system arrives last, fed by everything undocumented that came before it.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">If you don't look, you build for a system that doesn't map to reality — <span class="mark">which is how most AI pilots fail.</span></p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i class="on">DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[06/18]</span>
+  </div>
+</section>
+
+<!-- 7 · discovery fieldcraft -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.01 — DISCOVERY</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:31</b> · REV 6</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">Sit with the work, <span class="mark">not the org chart.</span></h1></div>
+  <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:30px">
+    <div class="card"><span class="tag">01</span><h3>Shadow full days</h3><p>In a one-hour meeting people describe the job they think they have. Beside them for eight, you see the undocumented exception actually happen.</p></div>
+    <div class="card"><span class="tag">02</span><h3>Get system access</h3><p>ERP, CRM, the four spreadsheets, the Slack approvals. Read the real artifacts, not the SOP.</p></div>
+    <div class="card"><span class="tag">03</span><h3>Expect many owners</h3><p>Several people run the "same" process differently. One source is a sample size of one — sit with more.</p></div>
+    <div class="card"><span class="tag">04</span><h3>Chase the exceptions</h3><p>One way to go right, a thousand ways to go wrong. The unwritten rules for what counts are the actual spec.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Discovery is also where trust is built — <span class="mark">the relationship is infrastructure</span> for everything that follows.</p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i class="on">DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[07/18]</span>
+  </div>
+</section>
+
+<!-- 8 · operating map -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.02 — AUDIT</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:44</b> · REV 7</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">Produce the <span class="mark">operating map.</span></h1></div>
+  <p class="lede">Collect context <span class="mono">→</span> trace findings <span class="mono">→</span> one decision artifact the business can act on.</p>
+  <table class="brut">
+    <tr><th colspan="2">THE AUDIT ARTIFACT — ONE OPERATING MAP</th></tr>
+    <tr><td class="k">Current-state workflow</td><td>How the work actually happens today</td></tr>
+    <tr><td class="k">Future-state workflow</td><td>The same work, rebuilt around AI</td></tr>
+    <tr><td class="k">Selected use case</td><td>One workflow, chosen for value</td></tr>
+    <tr><td class="k">Boundaries</td><td>What the system may and may not do</td></tr>
+    <tr><td class="k">Expected business value</td><td>Hours, cost, and errors — quantified</td></tr>
+  </table>
+  <div class="spacer"></div>
+  <p class="bigline">The audit is a product in its own right — <span class="mark">a cleanly mapped department with an ROI matrix is worth money</span> before anything is built.</p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i class="on">AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[08/18]</span>
+  </div>
+</section>
+
+<!-- 9 · automate or not -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.02 — AUDIT</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:49</b> · REV 7</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start;max-width:1400px"><h1 class="sm">Decide what should be automated — <span class="mark">and what should not.</span></h1></div>
+  <div class="flow">
+    <div class="col"><span class="tag">DETERMINISTIC SOFTWARE</span><p>When the rules and inputs are predictable. Most of a good solution is this — don't spend a model on an if-statement.</p></div>
+    <div class="arw" style="font-size:40px">·</div>
+    <div class="col hl"><span class="tag">AN AGENT</span><p>When the objective is clear but the inputs, path, or required actions vary. Often only 3 steps of 10 need judgment.</p></div>
+    <div class="arw" style="font-size:40px">·</div>
+    <div class="col"><span class="tag">A HUMAN IN CONTROL</span><p>When the decision carries material ambiguity, accountability, or irreversible consequences.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Some workflows shouldn't be touched at all. <span class="mark">Prioritize lengthy, high-volume workflows</span> where the improvement is large enough to matter.</p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i class="on">AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[09/18]</span>
+  </div>
+</section>
+
+<!-- 10 · three buckets -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.02 — AUDIT</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 08:55</b> · REV 7</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">A business measures <span class="mark">exactly three things.</span></h1></div>
+  <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-top:32px">
+    <div class="card"><div class="num">1</div><h3>Revenue uplift</h3><p>Reach customers faster, drive more value per customer, unlock throughput the old process capped.</p></div>
+    <div class="card"><div class="num">2</div><h3>Risk mitigation</h3><p>Fewer errors, auditable decisions, escalation by rule — the failures that used to be silent now leave evidence.</p></div>
+    <div class="card"><div class="num">3</div><h3>Cost savings</h3><p>Hours returned, rework eliminated, cost per run measured and driven down.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Every expected-value claim in the operating map lands in one of these buckets — <span class="mark">quantified, not vibes.</span></p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i class="on">AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[10/18]</span>
+  </div>
+</section>
+
+<!-- 11 · statement: unhappy paths -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.03 — BUILD</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 09:03</b> · REV 8</div>
+  </div>
+  <div class="fill">
+    <div class="hbox rot1" style="align-self:flex-start;max-width:1400px">
+      <h1 class="xl">Build for the <span class="mark">unhappy paths.</span></h1>
+    </div>
+    <p class="lede" style="margin-top:30px">There is one way something goes right and a thousand ways it goes wrong. An agent built for the happy path is worth nothing; <span class="lnk">the one that handles the exceptions</span> is the one worth deploying.</p>
+  </div>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i class="on">BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[11/18]</span>
+  </div>
+</section>
+
+<!-- 12 · build architecture -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.03 — BUILD</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 09:08</b> · REV 8</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">Add capability <span class="mark">in this order.</span></h1></div>
+  <div class="grid" style="grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:16px;margin-top:22px">
+    <div class="card" style="padding:14px 15px 12px"><div class="num" style="font-size:34px">1</div><h3 style="font-size:18px">Agent loop</h3><p style="font-size:13px">Prompt → model → response → next step, until done or a max-step limit hits.</p></div>
+    <div class="card" style="padding:14px 15px 12px"><div class="num" style="font-size:34px">2</div><h3 style="font-size:18px">Tool use</h3><p style="font-size:13px">Start minimal — one API call, one search. The agent decides when to call them.</p></div>
+    <div class="card" style="padding:14px 15px 12px"><div class="num" style="font-size:34px">3</div><h3 style="font-size:18px">Guardrails</h3><p style="font-size:13px">Input validation · max-step limit · output filtering.</p></div>
+    <div class="card" style="padding:14px 15px 12px"><div class="num" style="font-size:34px">4</div><h3 style="font-size:18px">Audit trail</h3><p style="font-size:13px">Log every prompt, tool call, result, error, timestamp. No visible traces, no trust.</p></div>
+    <div class="card" style="padding:14px 15px 12px"><div class="num" style="font-size:34px">5</div><h3 style="font-size:18px">Structured outputs</h3><p style="font-size:13px">A defined JSON schema, validated on every response. Retry or escalate on mismatch.</p></div>
+    <div class="card" style="padding:14px 15px 12px"><div class="num" style="font-size:34px">6</div><h3 style="font-size:18px">State &amp; recovery</h3><p style="font-size:13px">Checkpoint every few steps. Kill it deliberately — it must resume where it stopped.</p></div>
+    <div class="card" style="padding:14px 15px 12px"><div class="num" style="font-size:34px">7</div><h3 style="font-size:18px">Failure handling</h3><p style="font-size:13px">Enumerate the modes — missing data, dead APIs, timeouts, duplicates — and define behavior for each.</p></div>
+    <div class="card hl" style="padding:14px 15px 12px"><div class="num" style="font-size:34px">8</div><h3 style="font-size:18px">Retries &amp; backoff</h3><p style="font-size:13px">Exponential on every external call: 1s · 2s · 4s · 8s, capped. Escalate when retries run out.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline" style="font-size:19px">Pick one model and one agent platform and get genuinely good at it — <span class="mark">your value is judgment about the workflow, not the inference layer.</span></p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i class="on">BUILD</i><i>EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[12/18]</span>
+  </div>
+</section>
+
+<!-- 13 · evals matrix -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.04 — EVALS</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 09:17</b> · REV 9</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">Turn non-determinism <span class="mark">into evidence.</span></h1></div>
+  <p class="lede">A golden dataset of real cases with hand-labeled ideal outputs — graded on four dimensions.</p>
+  <table class="brut" style="font-size:15px">
+    <tr><th>THE EVALUATION CASES</th><th style="text-align:center">RIGHT DATA</th><th style="text-align:center">REQ. STEPS</th><th style="text-align:center">MATCHES EXPERT</th><th style="text-align:center">SAFE TO ACT</th></tr>
+    <tr><td class="k">The normal case</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td></tr>
+    <tr><td class="k">The edge case</td><td class="c">✓</td><td class="c">✓</td><td class="c">✗</td><td class="c">✗</td></tr>
+    <tr><td class="k">Incomplete information</td><td class="c">✗</td><td class="c">—</td><td class="c">—</td><td class="esc">→ HUMAN</td></tr>
+    <tr><td class="k">An ambiguous request</td><td class="c">✓</td><td class="c">✗</td><td class="c">—</td><td class="esc">→ HUMAN</td></tr>
+    <tr><td class="k">A high-risk action</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td><td class="esc">→ HUMAN</td></tr>
+  </table>
+  <div class="legend">✓ EXPECTED BEHAVIOR · ✗ FAILURE, EVIDENCE KEPT · → HUMAN ESCALATED BY RULE</div>
+  <div class="spacer"></div>
+  <p class="bigline"><span class="mark">No evidence, no autonomy</span> — the eval suite is what earns the system its next level of authority.</p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i class="on">EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[13/18]</span>
+  </div>
+</section>
+
+<!-- 14 · eval report -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.04 — EVALS</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 09:24</b> · REV 9</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">Failed runs <span class="mark">are the product.</span></h1></div>
+  <div class="report">
+    <div class="panel">
+      <div class="head">THE EVALUATION REPORT</div>
+      <div class="pbody">
+        <div class="pass">41<small> / 50 GRADED RUNS PASSED — 82%</small></div>
+        <div class="barwrap"><i style="width:82%"></i></div>
+        <div class="rowlab">FAILURE CATEGORIES — 9 RUNS</div>
+        <div class="fcat"><span style="width:160px">missing data</span><div class="fbar"><i style="width:100%"></i></div><b>5</b></div>
+        <div class="fcat"><span style="width:160px">wrong record pulled</span><div class="fbar"><i style="width:80%"></i></div><b>4</b></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="head">OPERATING RULES</div>
+      <div class="pbody">
+        <div class="rule"><b>CONFIDENCE</b><span>Below 0.80, the system must escalate.</span></div>
+        <div class="rule"><b>ESCALATION</b><span>High-risk actions always reach a person — by rule, not judgment call.</span></div>
+        <div class="rule"><b>READINESS</b><span>An honest maturity statement: "pilot — human review on every action."</span></div>
+        <div class="rule"><b>SUBJECTIVE</b><span>Where beauty is in the eye of the beholder, past examples define "good" — and human feedback keeps improving the harness.</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Investigate every failure, categorize it, feed it back. <span class="mark">That is what turning non-determinism into evidence means.</span></p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i class="on">EVALS</i><i>DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[14/18]</span>
+  </div>
+</section>
+
+<!-- 15 · deployment -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.05 — DEPLOY</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 09:33</b> · REV 10</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">Make it work <span class="mark">inside the business.</span></h1></div>
+  <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-top:30px">
+    <div class="card"><div class="num">1</div><h3>Integrate with what exists</h3><p>Never open with "first, migrate off your ERP." Build on top of the current stack and connect it — that's the edge over rip-and-replace.</p></div>
+    <div class="card"><div class="num">2</div><h3>Test in a controlled environment</h3><p>A sandbox inside the company's own infrastructure, where you can run, inspect, and debug safely.</p></div>
+    <div class="card"><div class="num">3</div><h3>Increase autonomy gradually</h3><p>Shadow mode → approve every action → approve only risky actions → autonomy where earned. Smallest useful action first.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">The pattern to push for: <span class="mark">agent handles intake, validation, and drafting — a human approves — the system completes the rest.</span></p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i class="on">DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[15/18]</span>
+  </div>
+</section>
+
+<!-- 16 · adoption & trust -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.05 — DEPLOY</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 09:38</b> · REV 10</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start;max-width:1420px"><h1 class="sm">Deployment is a people problem <span class="mark">wearing a software costume.</span></h1></div>
+  <div class="duo">
+    <div class="card"><h3>You are a risk to your sponsor</h3><p>Status quo is safe; bringing you in is not — if it fails, it's their name on it. De-risk them: <span class="lnk">visible traces, approval gates, gradual autonomy, measurable checkpoints.</span> Prove value before asking for trust.</p></div>
+    <div class="card hl"><h3>Your job is to get them promoted</h3><p>Drive value cost-effectively in the three buckets and make it attributable, so at review time they can point at it. Face to face makes every hard conversation easier — the relationship is infrastructure.</p></div>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">When production breaks, it's your name on the line: <span class="mark">know who to call, what to do, and how to fix it.</span></p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i class="on">DEPLOY</i><i>LOOP</i></span>
+    <span class="pg">[16/18]</span>
+  </div>
+</section>
+
+<!-- 17 · the loop again -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.06 — OBSERVE &amp; IMPROVE</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 09:47</b> · REV 11</div>
+  </div>
+  <div class="hbox" style="align-self:flex-start"><h1 class="sm">The loop <span class="mark">runs again.</span></h1></div>
+  <p class="lede">Watch production — metrics, failure categories, cost per run. Feed failures back into the golden dataset and the harness.</p>
+  <div class="pipe" style="margin-top:30px">
+    <span class="stg dim">Audit</span><span class="arw">→</span><span class="stg dim">Build</span><span class="arw">→</span><span class="stg dim">Evals</span><span class="arw">→</span><span class="stg dim">Deploy</span><span class="arw">→</span><span class="stg on">Observe</span><span class="arw">→</span><span class="stg on">Improve</span><span class="arw">↻</span>
+  </div>
+  <div class="spacer"></div>
+  <p class="bigline">Bottlenecks are interconnected: fixing one workflow exposes the constraint upstream and frees capacity downstream. <span class="mark">The next engagement is usually visible from inside the first</span> — that's how one workflow becomes the whole business.</p>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i class="on">LOOP</i></span>
+    <span class="pg">[17/18]</span>
+  </div>
+</section>
+
+<!-- 18 · closing -->
+<section class="slide">
+  <div class="toprow">
+    <span class="kicker">SEC.06 — THE JOB</span>
+    <div class="ts mono">MODIFIED <b>2026&#8209;07&#8209;21 09:52</b> · REV 11 · FINAL</div>
+  </div>
+  <div class="fill">
+    <div class="hbox rot1" style="align-self:flex-start;max-width:1440px">
+      <h1 class="xl">An FDE owns the path from <span class="mark">messy workflow</span> to <span style="background:#000;color:var(--yellow);padding:0 .1em">trusted production system.</span></h1>
+    </div>
+    <p class="lede" style="margin-top:30px"><span class="mono" style="font-weight:700">Audit → Build → Evals → Deploy → Observe → Improve.</span> Each stage earns the right to the next — and the loop runs again.</p>
+  </div>
+  <div class="foot">
+    <span class="fp">FDE-PLAYBOOK</span>
+    <span class="strip"><i>OVERVIEW</i><i>DISCOVERY</i><i>AUDIT</i><i>BUILD</i><i>EVALS</i><i>DEPLOY</i><i class="on">LOOP</i></span>
+    <span class="pg">[18/18]</span>
+  </div>
+</section>
+
+</div></div>
+<div class="hint">← → NAVIGATE · CLICK TO ADVANCE</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>

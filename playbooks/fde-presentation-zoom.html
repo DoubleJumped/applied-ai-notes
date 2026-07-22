@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — the loop</title>
+<style>
+  :root{
+    --bg:#101828;
+    --bg2:#0b1120;
+    --ink:#f1f5fb;
+    --sub:#aab6cc;
+    --faint:#6b7a95;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+  #stage{
+    width:1600px;height:900px;position:relative;flex:none;overflow:hidden;
+    background:var(--bg);
+    transform-origin:center center;
+  }
+
+  /* the big spatial canvas */
+  #canvas{
+    position:absolute;left:0;top:0;width:4800px;height:2700px;
+    transform-origin:0 0;
+    transform:translate(0px,0px) scale(.3333);
+    transition:transform .9s cubic-bezier(.5,.02,.2,1);
+    background:
+      radial-gradient(circle at 50% 42%, rgba(46,66,110,.35), transparent 60%),
+      radial-gradient(rgba(255,255,255,.05) 1.4px, transparent 1.5px);
+    background-size:auto, 46px 46px;
+    background-color:var(--bg);
+  }
+  @media (prefers-reduced-motion:reduce){#canvas{transition:none}}
+
+  /* ---- nodes ---- */
+  .node{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    border-radius:24px;
+    transition:box-shadow .5s ease, border-color .5s ease;
+  }
+
+  /* stations on the ring */
+  .station{
+    --h:#2dd4bf;
+    width:1180px;
+    padding:40px 46px 42px;
+    background:linear-gradient(180deg, rgba(31,44,71,.94), rgba(16,25,44,.96));
+    border:1.5px solid color-mix(in srgb, var(--h) 46%, transparent);
+    box-shadow:0 24px 70px rgba(0,0,0,.5),
+               0 0 90px -18px color-mix(in srgb, var(--h) 70%, transparent),
+               inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .station .head{display:flex;align-items:baseline;gap:20px}
+  .station .badge{
+    font-size:19px;font-weight:700;color:var(--bg);
+    background:var(--h);width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex:none;
+    align-self:center;box-shadow:0 0 24px -4px color-mix(in srgb,var(--h) 80%, transparent);
+  }
+  .station .word{font-size:60px;font-weight:700;letter-spacing:-.015em;color:var(--h);line-height:1;text-transform:uppercase}
+  .station .phase{font-size:14.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-left:auto;align-self:center}
+  .station .sub{font-size:27px;font-weight:600;color:#fff;letter-spacing:-.01em;margin:22px 0 14px}
+  .station p{font-size:18px;line-height:1.56;color:var(--sub);max-width:1000px}
+  .station .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+  .chip{
+    font-size:14px;letter-spacing:.01em;padding:7px 14px;border-radius:999px;
+    border:1px solid color-mix(in srgb,var(--h) 42%, transparent);
+    color:color-mix(in srgb,var(--h) 80%, white);
+    background:color-mix(in srgb,var(--h) 13%, transparent);
+    white-space:nowrap;
+  }
+
+  /* interior intro nodes */
+  .core{
+    width:1560px;padding:44px 56px;text-align:center;
+    background:linear-gradient(180deg, rgba(23,34,58,.92), rgba(13,20,37,.95));
+    border:1.5px solid rgba(120,150,200,.28);
+    box-shadow:0 26px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .core .eyebrow{font-size:15px;letter-spacing:.28em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:22px}
+  .core h1{font-size:74px;line-height:1.04;letter-spacing:-.02em;font-weight:700;
+    background:linear-gradient(92deg,#7fe7d6,#7db8ff,#c4a2ff);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .core .lede{font-size:23px;line-height:1.5;color:var(--sub);margin:26px auto 0;max-width:1080px}
+  .core .note{font-size:16px;letter-spacing:.06em;color:var(--faint);margin-top:26px}
+  .core .note b{color:#8fd8ff;font-weight:600}
+
+  .intro{
+    width:1240px;padding:40px 48px;text-align:center;
+    background:linear-gradient(180deg, rgba(23,34,58,.9), rgba(13,20,37,.94));
+    border:1.5px solid rgba(120,150,200,.24);
+    box-shadow:0 22px 66px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .intro .eyebrow{font-size:14px;letter-spacing:.26em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:16px}
+  .intro h2{font-size:44px;line-height:1.1;letter-spacing:-.015em;font-weight:700;color:#fff}
+  .intro p{font-size:19px;line-height:1.55;color:var(--sub);margin:20px auto 0;max-width:1000px}
+
+  /* role columns */
+  .flow{display:flex;align-items:stretch;justify-content:center;gap:16px;margin-top:30px}
+  .flow .cell{flex:1;border:1px solid rgba(120,150,200,.24);border-radius:14px;padding:22px 20px;text-align:left;background:rgba(255,255,255,.02)}
+  .flow .arw{align-self:center;font-size:30px;color:#7db8ff;flex:none}
+  .flow .t{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:#7db8ff;margin-bottom:10px}
+  .flow p{font-size:15px;line-height:1.5;color:var(--sub);margin:0}
+  .intro .kicker{font-size:16px;color:var(--faint);margin-top:22px}
+
+  /* satellite callouts */
+  .callout{
+    --h:#2dd4bf;
+    width:900px;padding:38px 44px;
+    background:linear-gradient(180deg, rgba(28,40,66,.94), rgba(14,22,40,.96));
+    border:1.5px solid color-mix(in srgb,var(--h) 48%, transparent);
+    box-shadow:0 22px 66px rgba(0,0,0,.5), 0 0 90px -18px color-mix(in srgb,var(--h) 70%, transparent), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .callout .tag{font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:14px}
+  .callout .stat{font-size:150px;font-weight:700;line-height:.86;letter-spacing:-.03em;color:var(--h)}
+  .callout .statsub{font-size:24px;font-weight:600;color:#fff;margin-top:6px}
+  .callout p{font-size:18px;line-height:1.55;color:var(--sub);margin-top:18px}
+  .callout h3{font-size:40px;font-weight:700;letter-spacing:-.015em;color:#fff;line-height:1.08}
+  .bucket{display:flex;align-items:baseline;gap:16px;margin-top:16px;font-size:20px}
+  .bucket .n{font-size:26px;font-weight:700;color:var(--h);width:30px;flex:none}
+  .bucket b{color:#fff;font-weight:600}
+  .bucket span{color:var(--sub);font-size:16.5px}
+  .kv{display:flex;gap:14px;margin-top:12px;font-size:16px;align-items:baseline}
+  .kv b{color:var(--h);letter-spacing:.1em;text-transform:uppercase;font-size:12.5px;width:118px;flex:none;padding-top:3px}
+  .kv span{color:var(--sub);line-height:1.45}
+  .track{height:12px;background:rgba(255,255,255,.08);border-radius:6px;margin:16px 0 6px;overflow:hidden}
+  .track i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--h),color-mix(in srgb,var(--h) 40%, white))}
+  .fail{display:flex;align-items:center;gap:12px;font-size:15.5px;color:var(--sub);margin-top:10px}
+  .fail .fb{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+  .fail .fb i{display:block;height:100%;background:color-mix(in srgb,var(--h) 65%, transparent);border-radius:4px}
+  .fail b{color:#fff;width:22px;text-align:right}
+
+  .focus{
+    box-shadow:0 26px 80px rgba(0,0,0,.6),
+               0 0 130px -10px color-mix(in srgb, var(--h,#8fb6ff) 85%, transparent),
+               inset 0 1px 0 rgba(255,255,255,.07) !important;
+    border-color:color-mix(in srgb, var(--h,#8fb6ff) 78%, transparent) !important;
+  }
+
+  /* loop svg */
+  #loop{position:absolute;left:0;top:0;width:4800px;height:2700px;pointer-events:none}
+
+  .hint{position:fixed;bottom:12px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#4a5872;font-weight:600}
+  .counter{position:fixed;top:14px;right:20px;font-size:11px;letter-spacing:.16em;color:#4a5872;font-weight:600}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+  <div id="canvas">
+
+    <!-- luminous loop -->
+    <svg id="loop" viewBox="0 0 4800 2700" aria-hidden="true">
+      <defs>
+        <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#2dd4bf"/>
+          <stop offset=".35" stop-color="#60a5fa"/>
+          <stop offset=".7" stop-color="#a78bfa"/>
+          <stop offset="1" stop-color="#f0abfc"/>
+        </linearGradient>
+        <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="9" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <ellipse cx="2400" cy="1350" rx="1700" ry="1000" fill="none"
+               stroke="url(#ring)" stroke-width="5" opacity=".9" filter="url(#glow)"/>
+      <ellipse cx="2400" cy="1350" rx="1700" ry="1000" fill="none"
+               stroke="url(#ring)" stroke-width="2" opacity=".55"/>
+      <!-- directional arrowheads (clockwise flow) -->
+      <g fill="#8fd8ff" filter="url(#glow)">
+        <polygon points="26,0 -14,-15 -14,15" transform="translate(3250,484) rotate(19)"/>
+        <polygon points="26,0 -14,-15 -14,15" transform="translate(4100,1350) rotate(90)"/>
+        <polygon points="26,0 -14,-15 -14,15" transform="translate(3250,2216) rotate(161)"/>
+        <polygon points="26,0 -14,-15 -14,15" transform="translate(1550,2216) rotate(199)"/>
+        <polygon points="26,0 -14,-15 -14,15" transform="translate(700,1350) rotate(270)"/>
+        <polygon points="26,0 -14,-15 -14,15" transform="translate(1550,484) rotate(341)"/>
+      </g>
+    </svg>
+
+    <!-- ============ INTERIOR: intro nodes ============ -->
+
+    <!-- premise -->
+    <div id="n-premise" class="node intro" style="left:2400px;top:730px">
+      <div class="eyebrow">The premise</div>
+      <h2>Everyone can buy intelligence.<br>That can't be the moat.</h2>
+      <p>The same foundational model is available to anyone able to pay. So the edge is no longer <b style="color:#e6edf7;font-weight:600">who</b> has intelligence — it's <b style="color:#8fd8ff;font-weight:600">where, how, and why</b> they use it. Someone has to decide where intelligence belongs, and where it does not.</p>
+    </div>
+
+    <!-- title / center -->
+    <div id="n-title" class="node core" style="left:2400px;top:1250px">
+      <div class="eyebrow">An end-to-end playbook · FDE methodology</div>
+      <h1>AI Forward Deployed<br>Engineering</h1>
+      <p class="lede">How intelligence enters a business — from a messy workflow to a trusted production system. Six stages arranged as one loop.</p>
+      <p class="note"><b>↻ Audit → Build → Evals → Deploy → Observe → Improve.</b> &nbsp; Each stage earns the right to the next — then the loop runs again.</p>
+    </div>
+
+    <!-- role -->
+    <div id="n-role" class="node intro" style="left:2400px;top:1790px;width:1440px">
+      <div class="eyebrow">The role</div>
+      <h2>That person is the forward deployed engineer</h2>
+      <div class="flow">
+        <div class="cell"><div class="t">Business reality</div><p>How the work actually happens — tools, people, exceptions, incentives, politics.</p></div>
+        <div class="arw">→</div>
+        <div class="cell"><div class="t">FDE judgment</div><p>Where intelligence belongs, and where it does not. The bridge across the aisle.</p></div>
+        <div class="arw">→</div>
+        <div class="cell"><div class="t">Deployed AI system</div><p>Working software carrying real responsibility inside the business.</p></div>
+      </div>
+      <div class="kicker">The best of consultant and engineer — not the average of the two.</div>
+    </div>
+
+    <!-- ============ RING: six phase stations ============ -->
+
+    <!-- 1 AUDIT (top) -->
+    <div id="s-audit" class="node station" style="--h:#2dd4bf;left:2400px;top:350px">
+      <div class="head"><div class="badge">1</div><div class="word">Audit</div><div class="phase">Discovery · Map reality</div></div>
+      <div class="sub">Map the real process, not the documented one.</div>
+      <p>The documented process is rarely the real process. Sit with the work, not the org chart — shadow full days, get system access, chase the exceptions. Then ship one <b style="color:#fff;font-weight:600">operating map</b>: current-state → future-state, a selected use case, boundaries, and expected value. Decide what to automate.</p>
+      <div class="chips"><span class="chip">Deterministic software</span><span class="chip">An agent</span><span class="chip">A human in control</span></div>
+    </div>
+
+    <!-- 2 BUILD (upper right) -->
+    <div id="s-build" class="node station" style="--h:#38bdf8;left:3872px;top:850px">
+      <div class="head"><div class="badge">2</div><div class="word">Build</div><div class="phase">For the unhappy paths</div></div>
+      <div class="sub">One way it goes right. A thousand ways it goes wrong.</div>
+      <p>An agent built for the happy path is worth nothing; the one that handles exceptions is the one worth deploying. Add capability in order — and pick one model and one platform, then get genuinely good at it.</p>
+      <div class="chips"><span class="chip">Agent loop</span><span class="chip">Tool use</span><span class="chip">Guardrails</span><span class="chip">Audit trail</span><span class="chip">Structured outputs</span><span class="chip">State &amp; recovery</span><span class="chip">Failure handling</span><span class="chip">Retries &amp; backoff</span></div>
+    </div>
+
+    <!-- 3 EVALS (lower right) -->
+    <div id="s-evals" class="node station" style="--h:#60a5fa;left:3872px;top:1850px">
+      <div class="head"><div class="badge">3</div><div class="word">Evals</div><div class="phase">Non-determinism → evidence</div></div>
+      <div class="sub">A golden dataset of real cases, hand-labeled.</div>
+      <p>Grade every run four ways — right data, required steps, matches the expert, safe to act. Cover the normal case, the edge case, incomplete information, an ambiguous request, and a high-risk action that escalates by rule. <b style="color:#fff;font-weight:600">No evidence, no autonomy</b> — the suite is what earns the system its next level of authority.</p>
+      <div class="chips"><span class="chip">Right data</span><span class="chip">Required steps</span><span class="chip">Matches expert</span><span class="chip">Safe to act</span></div>
+    </div>
+
+    <!-- 4 DEPLOY (bottom) -->
+    <div id="s-deploy" class="node station" style="--h:#818cf8;left:2400px;top:2350px">
+      <div class="head"><div class="badge">4</div><div class="word">Deploy</div><div class="phase">Make it work inside</div></div>
+      <div class="sub">Build on top of the stack that exists — never rip-and-replace.</div>
+      <p>Integrate with what's there, test in a controlled sandbox, then increase autonomy gradually: shadow mode → approve every action → approve only the risky ones → autonomy where it's earned. The pattern to push for: the agent handles intake, validation, and drafting; a human approves; the system completes the rest.</p>
+      <div class="chips"><span class="chip">Shadow mode</span><span class="chip">Approve all</span><span class="chip">Approve risky</span><span class="chip">Earned autonomy</span></div>
+    </div>
+
+    <!-- 5 OBSERVE (lower left) -->
+    <div id="s-observe" class="node station" style="--h:#a78bfa;left:928px;top:1850px">
+      <div class="head"><div class="badge">5</div><div class="word">Observe</div><div class="phase">Watch production</div></div>
+      <div class="sub">Metrics, failure categories, cost per run.</div>
+      <p>Production is the real eval set. Watch what the system actually does, categorize every failure honestly, and feed it straight back into the golden dataset and the harness. Investigating failures is the work — that's what turning non-determinism into evidence means.</p>
+      <div class="chips"><span class="chip">Metrics</span><span class="chip">Failure categories</span><span class="chip">Cost per run</span></div>
+    </div>
+
+    <!-- 6 IMPROVE (upper left) -->
+    <div id="s-improve" class="node station" style="--h:#f0abfc;left:928px;top:850px">
+      <div class="head"><div class="badge">6</div><div class="word">Improve</div><div class="phase">↻ The loop runs again</div></div>
+      <div class="sub">Fixing one workflow exposes the next bottleneck.</div>
+      <p>Bottlenecks are interconnected: repair one workflow and the constraint upstream appears while capacity frees downstream. The next engagement is usually visible from inside the first — that's how one workflow becomes the whole business, and the loop returns to <b style="color:#2dd4bf;font-weight:600">Audit</b>.</p>
+    </div>
+
+    <!-- ============ SATELLITE CALLOUTS ============ -->
+
+    <!-- 95% pilots fail — near Audit -->
+    <div id="c-95" class="node callout" style="--h:#2dd4bf;left:1180px;top:300px">
+      <div class="tag">Why discovery exists</div>
+      <div class="stat">95%</div>
+      <div class="statsub">of AI pilots fail</div>
+      <p>Build for a system that doesn't map to reality and it dies in pilot. The documented process is rarely the real one — that's the whole reason to sit with the work first.</p>
+    </div>
+
+    <!-- three buckets — near Audit -->
+    <div id="c-buckets" class="node callout" style="--h:#2dd4bf;left:3620px;top:300px;width:820px">
+      <div class="tag">Audit · the ROI matrix</div>
+      <h3>A business measures three things.</h3>
+      <div class="bucket"><span class="n">1</span><div><b>Revenue uplift</b> &nbsp;<span>reach customers faster, unlock capped throughput</span></div></div>
+      <div class="bucket"><span class="n">2</span><div><b>Risk mitigation</b> &nbsp;<span>fewer errors, auditable decisions, escalation by rule</span></div></div>
+      <div class="bucket"><span class="n">3</span><div><b>Cost savings</b> &nbsp;<span>hours returned, rework eliminated, cost per run driven down</span></div></div>
+      <p style="margin-top:18px">Every expected-value claim lands in one of these — quantified, not vibes.</p>
+    </div>
+
+    <!-- no traces no trust — near Build -->
+    <div id="c-notrace" class="node callout" style="--h:#38bdf8;left:4380px;top:430px;width:820px">
+      <div class="tag">Build · the audit trail</div>
+      <h3>No traces,<br>no trust.</h3>
+      <p>Log every prompt, tool call, result, error, and timestamp. Visible evidence is what earns the system its next level of authority — and what de-risks the person who let it in.</p>
+    </div>
+
+    <!-- 82% eval report — near Evals -->
+    <div id="c-82" class="node callout" style="--h:#60a5fa;left:4360px;top:2250px;width:860px">
+      <div class="tag">Evals · the report — failed runs are the product</div>
+      <div class="stat" style="font-size:96px">82%</div>
+      <div class="statsub">41 / 50 graded runs passed</div>
+      <div class="track"><i style="width:82%"></i></div>
+      <div class="fail"><span style="width:170px">missing data</span><div class="fb"><i style="width:100%"></i></div><b>5</b></div>
+      <div class="fail"><span style="width:170px">wrong record pulled</span><div class="fb"><i style="width:80%"></i></div><b>4</b></div>
+      <div class="kv" style="margin-top:18px"><b>Rule</b><span>Below 0.80 confidence, the system must escalate — high-risk actions always reach a person, by rule, not judgment call.</span></div>
+    </div>
+
+    <!-- people problem — near Deploy -->
+    <div id="c-people" class="node callout" style="--h:#818cf8;left:1300px;top:2470px;width:840px">
+      <div class="tag">Deploy · adoption &amp; trust</div>
+      <h3>A people problem in a software costume.</h3>
+      <p>You're a risk to your sponsor — the status quo is safe, bringing you in is not. De-risk them with visible traces, approval gates, and gradual autonomy. Your job is to get them promoted: make the value attributable, and remember the relationship is infrastructure.</p>
+    </div>
+
+  </div>
+</div></div>
+
+<div class="counter"><span id="cnum">01</span> / 16</div>
+<div class="hint">← → navigate &nbsp;·&nbsp; click to advance &nbsp;·&nbsp; the overview is the message</div>
+
+<script>
+  // camera per step: focus canvas point (cx,cy) at scale s; optional focus node id
+  const STEPS=[
+    {cx:2400,cy:1350,s:.3333,f:null},        // 1  overview
+    {cx:2400,cy:730 ,s:1.00 ,f:'n-premise'}, // 2  premise
+    {cx:2400,cy:1790,s:0.92 ,f:'n-role'},    // 3  role (center detail)
+    {cx:2400,cy:350 ,s:1.00 ,f:'s-audit'},   // 4  Audit
+    {cx:1180,cy:300 ,s:1.15 ,f:'c-95'},      // 5  95% satellite
+    {cx:3620,cy:300 ,s:1.05 ,f:'c-buckets'}, // 6  three buckets
+    {cx:3872,cy:850 ,s:1.00 ,f:'s-build'},   // 7  Build
+    {cx:4380,cy:430 ,s:1.12 ,f:'c-notrace'}, // 8  no traces no trust
+    {cx:3872,cy:1850,s:1.00 ,f:'s-evals'},   // 9  Evals
+    {cx:4360,cy:2280,s:1.02 ,f:'c-82'},      // 10 82% report
+    {cx:2400,cy:2350,s:1.00 ,f:'s-deploy'},  // 11 Deploy
+    {cx:1300,cy:2510,s:1.08 ,f:'c-people'},  // 12 people problem
+    {cx:928 ,cy:1850,s:1.00 ,f:'s-observe'}, // 13 Observe
+    {cx:928 ,cy:850 ,s:1.00 ,f:'s-improve'}, // 14 Improve
+    {cx:2400,cy:1350,s:0.50 ,f:null},        // 15 pull back (half view)
+    {cx:2400,cy:1350,s:.3333,f:null}         // 16 full overview
+  ];
+
+  const canvas=document.getElementById('canvas');
+  const stage=document.getElementById('stage');
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),STEPS.length-1);
+  let lastFocus=null;
+
+  function show(n){
+    i=Math.min(Math.max(n,0),STEPS.length-1);
+    const st=STEPS[i];
+    const tx=800-st.cx*st.s, ty=450-st.cy*st.s;
+    canvas.style.transform='translate('+tx+'px,'+ty+'px) scale('+st.s+')';
+    if(lastFocus){lastFocus.classList.remove('focus');lastFocus=null;}
+    if(st.f){const el=document.getElementById(st.f);if(el){el.classList.add('focus');lastFocus=el;}}
+    document.getElementById('cnum').textContent=String(i+1).padStart(2,'0');
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    stage.style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1);}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1);}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(STEPS.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1);});
+</script>
+</body>
+</html>

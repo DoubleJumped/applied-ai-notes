@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How intelligence enters this business — a six-page memo</title>
+<style>
+  :root{
+    --desk:#5b5b5e;        /* neutral desk-gray */
+    --desk2:#525255;
+    --paper:#fbfaf7;       /* warm document white */
+    --ink:#161310;         /* near-black, warm */
+    --soft:#3f3d39;        /* softened ink for labels */
+    --rule:#c9c6bf;        /* hairline rules */
+    --faint:#8b877f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(120% 90% at 50% 0%, #66666a 0%, var(--desk) 46%, var(--desk2) 100%);
+    color:var(--ink);
+    overflow:hidden;
+    font-family:Georgia,"Iowan Old Style","Palatino Linotype","Times New Roman",serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  /* conceptual stage: 1600 wide gives desk margin; 1120 tall lets a letter page fit */
+  #stage{width:1600px;height:1120px;position:relative;flex:none;transform-origin:center center}
+
+  /* the sheet of paper — US letter proportion (8.5 x 11) */
+  .page{
+    position:absolute;top:50%;left:50%;
+    width:850px;height:1100px;
+    margin:-550px 0 0 -425px;
+    background:var(--paper);
+    box-shadow:0 2px 4px rgba(0,0,0,.28),0 26px 60px rgba(0,0,0,.42);
+    padding:76px 94px 54px;
+    display:flex;flex-direction:column;
+    opacity:0;visibility:hidden;
+    transition:opacity .22s ease,visibility 0s .22s;
+  }
+  .page.active{opacity:1;visibility:visible;transition:opacity .22s ease}
+  @media (prefers-reduced-motion:reduce){.page{transition:none}}
+
+  /* faint paper texture edge */
+  .page::after{content:"";position:absolute;inset:0;pointer-events:none;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.045)}
+
+  /* ---- memo header (page 1) ---- */
+  .masthead{font-family:Georgia,serif}
+  .mastrow{display:flex;justify-content:space-between;align-items:baseline;gap:24px}
+  .org{font-size:12.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--soft);font-weight:bold}
+  .memoword{font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+  .rule-hair{border:0;border-top:1px solid var(--ink);margin:14px 0 0}
+  .rule-thin{border:0;border-top:1px solid var(--rule);margin:0}
+
+  .fields{margin:22px 0 0;display:grid;grid-template-columns:64px 1fr;row-gap:8px;column-gap:14px;
+    font-size:16px;line-height:1.3}
+  .fields dt{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);
+    font-family:Georgia,serif;padding-top:4px}
+  .fields dd{font-size:16.5px;color:var(--ink)}
+  .fields dd.re{font-weight:bold}
+  .silent{margin:16px 0 0;font-style:italic;font-size:14px;color:var(--faint);line-height:1.45}
+  .silent::before{content:"—  "}
+
+  /* ---- running head (pages 2–6) ---- */
+  .runhead{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:12px;color:var(--faint);letter-spacing:.02em}
+  .runhead .subj{font-style:italic}
+  .runhead .sec{letter-spacing:.16em;text-transform:uppercase;font-size:10.5px}
+  .runhead + .rule-thin{margin-top:9px}
+
+  /* ---- body typography ---- */
+  h2.sect{font-size:21px;font-weight:bold;letter-spacing:.005em;line-height:1.22;
+    margin:24px 0 3px}
+  .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);
+    margin-top:22px}
+  .kicker + h2.sect{margin-top:3px}
+
+  .body{margin-top:13px;flex:1}
+  .body p{
+    font-size:17px;line-height:1.53;text-align:justify;hyphens:auto;
+    color:var(--ink);text-indent:1.6em;margin:0;
+  }
+  .body p.lead{text-indent:0}
+  .body p + p{margin-top:0}
+  /* opening paragraph of page one, a touch larger */
+  .body p.opening{font-size:17px;text-indent:0}
+
+  .sig{margin-top:14px;text-indent:0;font-size:17px}
+  .em{font-style:italic}
+
+  /* ---- exhibit table (evals page) ---- */
+  .exhibit{margin:15px 0 4px}
+  .exhibit .cap{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
+    margin-bottom:7px}
+  table{border-collapse:collapse;width:100%;font-family:Georgia,serif;font-size:14px}
+  caption{caption-side:top}
+  thead th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:bold;
+    color:var(--soft);text-align:center;padding:0 8px 6px;border-bottom:1.5px solid var(--ink)}
+  thead th.rowh{text-align:left}
+  tbody td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--rule);
+    font-size:14.5px;vertical-align:middle}
+  tbody td.rowh{text-align:left;font-style:italic;font-size:15px}
+  tbody tr:last-child td{border-bottom:1px solid var(--ink)}
+  .esc{font-variant:small-caps;letter-spacing:.04em;font-size:13.5px}
+  .tnote{font-size:12.5px;color:var(--faint);font-style:italic;margin-top:6px;line-height:1.4}
+
+  /* ---- footer ---- */
+  .foot{margin-top:auto;padding-top:16px}
+  .foot .r{border:0;border-top:1px solid var(--rule);margin-bottom:10px}
+  .folio{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:11.5px;color:var(--faint);letter-spacing:.04em}
+  .folio .n{font-style:italic}
+  .folio .mark{letter-spacing:.22em;text-transform:uppercase;font-size:10px}
+
+  .hint{position:fixed;bottom:7px;right:16px;text-align:right;
+    font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#c9c8c4;
+    font-family:Georgia,serif;opacity:.5}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- ============ PAGE 1 — purpose, premise, role ============ -->
+<section class="page">
+  <div class="masthead">
+    <div class="mastrow">
+      <div class="org">The Forward Deployed Engineering Practice</div>
+      <span class="memoword">Memorandum</span>
+    </div>
+    <hr class="rule-hair">
+  </div>
+  <dl class="fields">
+    <dt>To</dt><dd>The team</dd>
+    <dt>From</dt><dd>The FDE practice</dd>
+    <dt>Date</dt><dd>July 21, 2026</dd>
+    <dt>Re</dt><dd class="re">How intelligence enters this business</dd>
+  </dl>
+  <hr class="rule-thin" style="margin-top:20px">
+  <p class="silent">Please read this in silence. We will talk once everyone has finished; the reading is the meeting.</p>
+
+  <div class="body">
+    <p class="opening">This memo exists to be read, not presented. There are no slides today, because a narrative forces a kind of thinking that a list of bullet points lets us skip. A claim made in a full sentence has to defend itself; an argument built in paragraphs has to actually connect. What follows is the argument for how a forward deployed engineering practice brings artificial intelligence into a real business, and for why the discipline of the method matters far more than the sophistication of any model we happen to use.</p>
+    <p>Begin from an uncomfortable premise: intelligence is no longer scarce, and every company can now simply buy it. The same frontier models are available to anyone willing to pay, which means the model itself cannot be anyone's advantage — our competitors are typing into the very same box we are. If intelligence is a commodity, the edge cannot live in possessing it. It lives in deployment: where a business points that intelligence, how it wires it into work that already exists, and why it chooses one workflow over another. Someone has to decide where intelligence belongs, and, just as importantly, where it does not.</p>
+    <p>That someone is the forward deployed engineer, and the role is deliberately two-sided. On one side sits the consulting instinct — the patience to learn how work is really done, and the fluency to talk about cost, risk, incentives, and the internal politics that quietly decide whether anything ever ships. On the other sits the engineering instinct: models, systems, APIs, evaluation, and the guardrails that keep an autonomous thing from doing harm. The FDE is not the average of these two temperaments but the best of both, because the judgment that matters lives precisely on the bridge between them — the judgment that says this design reaches eighty percent accuracy and is not worth the risk, while that other workflow carries higher return, lower exposure, and ships sooner.</p>
+    <p>The rest of this memo walks the loop we run to earn that judgment, one stage at a time: discovery, then the audit, then the build, then evaluation, then deployment and the loop that follows from it. Each stage earns the right to the next, none may be skipped, and the reason most attempts fail is precisely that they skip the first one. It begins, then, with looking.</p>
+  </div>
+
+  <div class="foot">
+    <hr class="r">
+    <div class="folio"><span class="mark">FDE Practice · Internal</span><span class="n">Page 1 of 6</span></div>
+  </div>
+</section>
+
+<!-- ============ PAGE 2 — discovery ============ -->
+<section class="page">
+  <div class="runhead"><span class="subj">Re: How intelligence enters this business</span><span class="sec">Discovery</span></div>
+  <hr class="rule-thin">
+
+  <div class="kicker">The first discipline</div>
+  <h2 class="sect">Discovery: understand how the work is really done</h2>
+
+  <div class="body">
+    <p class="lead">The first discipline is the hardest to sell and the easiest to shortchange, because while it is underway it looks as though nothing is being built. The documented process is almost never the real process. Ask someone what step one is and they will tell you that an email arrives; build for that sentence and you will have built for a system that does not exist. The real trigger is forty-odd senders, no two of whom format anything alike, with the data buried in PDFs, screenshots, and forwarded threads — and half of those messages are exceptions wearing the costume of routine. Same as last time. Sarah already signed off. The logic that decides what to do with each one lives entirely inside one person's head, and that undocumented rulebook is the actual specification. Discovering it is the job.</p>
+    <p>So we go where the work happens. We do not book a one-hour interview; we shadow the person for full days at a time. In a meeting, people describe the job they believe they have, cleaned up and made sensible in the retelling. Sitting beside them, we see the job they actually do — and, crucially, the improvised exception that fires the moment something goes wrong, which is exactly what no written procedure ever captures. We ask for genuine system access, to the ERP and the CRM and the spreadsheets and the Slack channels where approvals quietly live, because we want to read the real artifacts rather than a sanitized description of them.</p>
+    <p>Then we trace every step and go one level deeper on each, because every simple-looking step conceals real work. The spreadsheet is never one spreadsheet; it is four — one true, two stale, and a personal copy on someone's desktop that quietly disagrees with the rest. It is a database, a workflow engine, and an audit log all wearing a grid costume, and all three must be reverse-engineered before any of it is replaced. The internal system sits behind a VPN with no API and no export button, where the word <span class="em">status</span> means five different things and the real validation rule is tribal — region four always needs a second look — held by one person who may be gone within the year. We expect several owners running the same process differently, so we sit with more than one of them. And above all we document the exceptions, because there is one way a workflow goes right and a thousand ways it goes wrong, and the value is in the thousand.</p>
+    <p>This is the phase that cannot be skipped. The widely cited figure that some ninety-five percent of AI pilots fail is, in our experience, a statistic about this phase — about slapping intelligence onto a workflow that no one troubled to understand. It is also where trust begins and where adoption is quietly won, long before a single line of production code is ever written.</p>
+  </div>
+
+  <div class="foot">
+    <hr class="r">
+    <div class="folio"><span class="mark">FDE Practice · Internal</span><span class="n">Page 2 of 6</span></div>
+  </div>
+</section>
+
+<!-- ============ PAGE 3 — audit + automation decision ============ -->
+<section class="page">
+  <div class="runhead"><span class="subj">Re: How intelligence enters this business</span><span class="sec">The Audit</span></div>
+  <hr class="rule-thin">
+
+  <div class="kicker">From raw material to a decision</div>
+  <h2 class="sect">The audit: produce the operating map</h2>
+
+  <div class="body">
+    <p class="lead">Discovery produces raw material; the audit turns that material into a decision. We gather the context — interviews, emails, spreadsheets, SOPs, systems, approval paths, and exception handling — and trace from it the findings that actually matter: the bottlenecks, the repetitive work, the genuine points of judgment, the systems any solution must touch, the ways the work fails, and the automation worth doing. The output is a single artifact we call the operating map. It sets the current-state workflow beside a future-state version rebuilt around AI; it names one selected use case, chosen for its value; it draws the boundaries of what a system may and may not do; and it states the expected business value in hours, cost, and errors, quantified rather than merely gestured at.</p>
+    <p>The heart of the audit is a decision made step by step: what should be automated, and what should not. Every step of the workflow is routed to one of three destinations. Most of it belongs in deterministic software — plain if-else logic and API calls — because the rules and inputs are predictable, and spending a language model on a task a conditional can handle is simply waste. Some of it belongs to an agent: the steps where the objective is clear but the inputs, the path, or the required actions vary, which is often only a few steps out of ten. And some belongs to a human in control, wherever the decision carries material ambiguity, real accountability, or a consequence that cannot be undone. Some workflows should not be touched at all, being too risky, already automated, or simply not worth the return; we prioritize the lengthy, high-volume ones where the improvement is large enough to be felt. Whatever value we claim, we frame it in the only three terms a business truly measures: revenue uplift, risk mitigation, or cost savings.</p>
+    <p>It is worth stating plainly that the audit is a product in its own right. A department cleanly mapped — every workflow traced, every exception included, with a priority-and-return matrix of what is worth automating — is valuable to the business before anything at all has been built. Clients have told us the map alone was worth several times what they paid for it, and it is also our best instrument for building trust: it lets us underpromise and overdeliver, and it surfaces uses of AI the business had not thought to ask for. One field note, earned the hard way: some clients hear the word <span class="em">audit</span> as an accusation. The word <span class="em">sprint</span> lands more easily and means the same thing.</p>
+  </div>
+
+  <div class="foot">
+    <hr class="r">
+    <div class="folio"><span class="mark">FDE Practice · Internal</span><span class="n">Page 3 of 6</span></div>
+  </div>
+</section>
+
+<!-- ============ PAGE 4 — build ============ -->
+<section class="page">
+  <div class="runhead"><span class="subj">Re: How intelligence enters this business</span><span class="sec">The Build</span></div>
+  <hr class="rule-thin">
+
+  <div class="kicker">Capability, added in order</div>
+  <h2 class="sect">The build: engineer for the unhappy paths</h2>
+
+  <div class="body">
+    <p class="lead">When we build, we add capability in a deliberate order, and the order is itself the argument. It begins with the agent loop — prompt, model, response, next step, repeating until the task is done or a maximum-step limit stops it — and the bar is not that it works when prompted perfectly, but that it solves the task reliably even when the request is phrased badly. Onto that we add tool use, starting with the bare minimum of one API call and one search, and letting the agent decide when to reach for them. Then come the guardrails: input validation, a hard cap on steps, and filtering on whatever comes out.</p>
+    <p>From there the work turns toward memory and, more importantly, toward proof. Context lives in the model's window by default; external memory is added only when state genuinely has to outlive a single run. The audit trail, by contrast, is never optional. We log every prompt, every response, every tool call and its result, every error, and every timestamp — because if we cannot show the client exactly what the agent is doing, they will never trust it, and visible traces are the only real antidote to the fear an autonomous system provokes. Outputs are structured against a defined JSON schema and validated on every response, retrying or escalating whenever the structure comes back wrong rather than passing malformed data downstream. State is checkpointed every few steps, so the system can be killed on purpose and resume from exactly where it stopped.</p>
+    <p>The last and most important layer is explicit failure handling. We enumerate the ways the work breaks — missing data, malformed responses, dead APIs, timeouts, duplicates, partial completion — and define a behavior for each: retry with exponential backoff, escalate to a person, or stop cleanly. This is the whole theme of the build, and it is where the days spent in discovery finally pay for themselves. An agent that handles only the happy path is worth nothing; the one that handles the thousand ways things go wrong is the one worth deploying, and you can only build around real failure modes if you were there to watch them happen.</p>
+    <p>A word on model choice, because it arises early and matters less than people expect. We do not optimize for being model-agnostic at the start. We pick one model and one platform, get genuinely good at both, and benchmark alternatives from that foundation, using cheaper models for the simple subtasks and leaning on caching and token limits to hold cost down. Our value was never the inference layer; it is the judgment about the workflow wrapped around it.</p>
+  </div>
+
+  <div class="foot">
+    <hr class="r">
+    <div class="folio"><span class="mark">FDE Practice · Internal</span><span class="n">Page 4 of 6</span></div>
+  </div>
+</section>
+
+<!-- ============ PAGE 5 — evals (with exhibit table) ============ -->
+<section class="page">
+  <div class="runhead"><span class="subj">Re: How intelligence enters this business</span><span class="sec">Evaluation</span></div>
+  <hr class="rule-thin">
+
+  <div class="kicker">Non-determinism, made into evidence</div>
+  <h2 class="sect">Evaluation: prove it before it touches real work</h2>
+
+  <div class="body">
+    <p class="lead">An autonomous system is non-deterministic, and a business cannot responsibly trust what it cannot predict, so before anything touches real work we make it prove itself. The instrument is a golden dataset: at least twenty real cases, each with a hand-labeled ideal output, chosen to cover the situations that matter rather than the convenient ones. It must include the normal case, the edge case, incomplete information, a genuinely ambiguous request, and a high-risk action, because a system that passes only the normal case has told us almost nothing. Every run is graded on four questions: did it pull the right data, take the required steps, match what an expert would have done, and stay safe to act upon. The pattern that falls out looks like Exhibit&nbsp;A.</p>
+
+    <div class="exhibit">
+      <div class="cap">Exhibit A · Five representative cases, graded on four dimensions</div>
+      <table>
+        <thead>
+          <tr>
+            <th class="rowh">Case type</th>
+            <th>Right&nbsp;data</th>
+            <th>Required&nbsp;steps</th>
+            <th>Matches&nbsp;expert</th>
+            <th>Safe&nbsp;to&nbsp;act</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="rowh">The normal case</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+          <tr><td class="rowh">The edge case</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr>
+          <tr><td class="rowh">Incomplete information</td><td>✗</td><td>—</td><td>—</td><td class="esc">→ human</td></tr>
+          <tr><td class="rowh">An ambiguous request</td><td>✓</td><td>✗</td><td>—</td><td class="esc">→ human</td></tr>
+          <tr><td class="rowh">A high-risk action</td><td>✓</td><td>✓</td><td>✓</td><td class="esc">→ human</td></tr>
+        </tbody>
+      </table>
+      <p class="tnote">✓ expected behavior · ✗ failure, with the evidence kept · → human escalated by rule.</p>
+    </div>
+
+    <p class="lead">The point of the exhibit is not the checkmarks; it is the final column. A system that knows when to hand a decision back to a person is worth more than one that is merely accurate, because the escalations are where accountability is preserved. From the full run we produce an evaluation report — a pass rate, say forty-one of fifty at eighty-two percent, with failures sorted into named categories and counted: missing data five times, wrong record pulled four. Those categories are not embarrassments to be hidden; they are the most useful output the process generates, and they hand us the operating rules the deployed system will run by. Below a confidence threshold, often set at first to 0.80, the system must escalate rather than guess; high-risk actions always reach a person, by rule and not by judgment; and we state an honest readiness — <span class="em">pilot, human review on every action</span>, or something further along. For genuinely subjective work, where evals alone never reach perfection, past examples define what good means and a human-in-the-loop keeps improving the harness. Failed runs are not failures of the project; they are the evidence, and turning non-determinism into evidence is the entire point of the phase.</p>
+  </div>
+
+  <div class="foot">
+    <hr class="r">
+    <div class="folio"><span class="mark">FDE Practice · Internal</span><span class="n">Page 5 of 6</span></div>
+  </div>
+</section>
+
+<!-- ============ PAGE 6 — deployment, the loop, the ask ============ -->
+<section class="page">
+  <div class="runhead"><span class="subj">Re: How intelligence enters this business</span><span class="sec">Deployment · The Ask</span></div>
+  <hr class="rule-thin">
+
+  <div class="kicker">Into the business, and around again</div>
+  <h2 class="sect">Deployment, the loop, and what we are asking for</h2>
+
+  <div class="body">
+    <p class="lead">Deployment is where the software begins to carry real operational responsibility, and it succeeds or fails on how well it fits the business it enters. We build on top of what already exists and never open with a demand to migrate off it; a company that spent years and millions moving onto a platform will show us the door if we propose replacing it, whereas building over that platform and connecting it to the rest of the stack is precisely our edge over the rip-and-replace vendors. We test first inside a controlled sandbox within the company's own infrastructure, where a run can be inspected and debugged without consequence. Then we raise autonomy gradually — shadow mode first, then approval on every action, then approval only for the risky ones, then genuine autonomy where it has been earned — beginning with the smallest useful action and granting more authority only after the system has proven it deserves it. The pattern we push toward is a clean division of labor: the agent handles intake, validation, and drafting; a person approves; and the system completes the back half and posts the record.</p>
+    <p>Deployment is also a human phase, and two political facts are worth engineering around. The first is that we are a risk to whoever sponsors us. The status quo is safe and championing something new is not, so we spend real effort de-risking that person — with visible traces, human approval gates, gradual autonomy, and measurable checkpoints — because trust is earned in that currency and no other. The second follows from the first: our actual job is to get our sponsor promoted. If we drive value cost-effectively in those three business terms and make it plainly attributable to them, the next engagement becomes easy — and that, far more than any architectural elegance, is what carries the relationship forward.</p>
+    <p>Then the loop runs again. We watch production — the metrics, the failure categories, the cost per run — and feed every failure back into the golden dataset and the harness. The next workflow to fix is usually obvious from inside the first, because bottlenecks are interconnected: relieving one exposes the constraint upstream and frees capacity downstream. That is how the work compounds, from improving a single workflow toward improving the whole business.</p>
+    <p class="sig">Which brings us to the ask. We are not asking for a large bet. We are asking for one workflow — a lengthy, high-volume one that genuinely hurts — and for the access and the time to run this loop against it once, all the way through, ending in a mapped process and a working system you can watch operate. If it earns the next step, it will have earned it in evidence. Please take the remaining minutes to mark anything you want to challenge; then let us discuss.</p>
+  </div>
+
+  <div class="foot">
+    <hr class="r">
+    <div class="folio"><span class="mark">FDE Practice · Internal</span><span class="n">Page 6 of 6</span></div>
+  </div>
+</section>
+
+</div></div>
+<div class="hint">← → turn pages</div>
+
+<script>
+  const pages=[...document.querySelectorAll('.page')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),pages.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),pages.length-1);
+    pages.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/1120);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(pages.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>

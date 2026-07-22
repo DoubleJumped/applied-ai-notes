@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forward Deployed Engineering — a working handout</title>
+<style>
+  :root{
+    --paper:#fffef9;
+    --ink:#1a160f;
+    --soft:#3d372c;
+    --muted:#7a7365;
+    --faint:#a49c8c;
+    --red:#a00000;
+    --hair:#d7d1c2;
+    --hairhard:#b9b2a1;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    background:#e9e6dc;
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;position:relative;flex:none}
+
+  .page{
+    position:absolute;inset:0;
+    background:var(--paper);
+    padding:60px 66px 74px;
+    display:flex;flex-direction:column;justify-content:center;
+    opacity:0;visibility:hidden;
+    transition:opacity .3s ease,visibility 0s .3s;
+  }
+  .page.active{opacity:1;visibility:visible;transition:opacity .3s ease}
+  @media (prefers-reduced-motion:reduce){.page{transition:none}}
+
+  .eyebrow{
+    font-size:12px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--muted);font-style:italic;margin-bottom:16px;
+  }
+  .headline{
+    font-size:31px;line-height:1.3;font-weight:400;color:var(--ink);
+    max-width:930px;margin-bottom:26px;letter-spacing:.002em;
+  }
+  .headline em{font-style:italic}
+
+  .grid{flex:none;display:grid;grid-template-columns:930px 480px;column-gap:52px;min-height:0}
+  .main{display:flex;flex-direction:column;gap:22px;min-height:0}
+  .two{display:grid;grid-template-columns:1fr 1fr;column-gap:44px}
+  .two > div > p, .prose p{
+    font-size:18px;line-height:1.55;color:var(--ink);
+  }
+  .two > div > p + p, .prose p + p{text-indent:1.25em}
+  .lead{font-style:italic;color:var(--soft)}
+  .prose{max-width:100%}
+
+  /* sidenotes / margin */
+  .aside{display:flex;flex-direction:column;gap:17px;padding-top:2px}
+  .sn{font-size:14px;line-height:1.5;color:var(--soft)}
+  .sn .n{color:var(--red);font-weight:700;font-style:italic;margin-right:.35em;
+    font-size:12.5px;vertical-align:.35em;letter-spacing:.02em}
+  .sn b{font-style:italic;font-weight:400;color:var(--ink)}
+  sup.ref{color:var(--red);font-size:.68em;font-weight:700;vertical-align:super;
+    line-height:0;padding-left:1px;font-style:normal}
+  .cap{font-size:12.5px;line-height:1.4;color:var(--muted);font-style:italic;margin-top:7px}
+
+  /* hairline table — operating map */
+  table.map{border-collapse:collapse;width:100%;margin:2px 0}
+  table.map caption{
+    text-align:left;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--muted);font-style:italic;padding-bottom:9px;
+    border-bottom:1.4px solid var(--hairhard);margin-bottom:0;
+  }
+  table.map td{
+    font-size:16px;line-height:1.4;padding:10px 4px;
+    border-bottom:1px solid var(--hair);vertical-align:top;
+  }
+  table.map tr:last-child td{border-bottom:1.4px solid var(--hairhard)}
+  table.map td.k{font-style:italic;color:var(--ink);width:44%;padding-right:16px}
+  table.map td.v{color:var(--soft)}
+
+  /* small multiples */
+  .sm-row{display:flex;gap:18px;justify-content:space-between;margin:2px 0}
+  .sm{flex:1;text-align:center}
+  .sm .t{font-size:13px;font-style:italic;color:var(--ink);margin-bottom:2px;white-space:nowrap}
+  .sm-legend{font-size:12.5px;color:var(--muted);font-style:italic;line-height:1.45;
+    border-top:1px solid var(--hair);padding-top:9px;margin-top:2px}
+
+  /* eval report */
+  .report{display:grid;grid-template-columns:1fr;gap:14px}
+  .passline{display:flex;align-items:baseline;gap:14px}
+  .passline .big{font-size:40px;line-height:1;color:var(--ink);letter-spacing:.01em}
+  .passline .lab{font-size:14px;font-style:italic;color:var(--muted)}
+  .metric{font-size:16px;line-height:1.5}
+  .fbar-row{display:flex;align-items:center;gap:12px;font-size:15px;margin-top:6px}
+  .fbar-row .fl{width:150px;font-style:italic;color:var(--soft)}
+  .fbar{flex:1;height:1px;background:var(--hair);position:relative}
+  .fbar i{position:absolute;left:0;top:-3px;height:7px;background:var(--soft);display:block}
+  .fbar-row b{width:18px;text-align:right;font-weight:400;color:var(--ink)}
+  .rules{margin-top:6px}
+  .rules .r{font-size:16px;line-height:1.5;margin-top:5px}
+  .rules .r i{color:var(--ink)}
+
+  /* inline sparkline */
+  .spark{vertical-align:-3px;margin:0 2px}
+  .spark polyline{fill:none;stroke:var(--soft);stroke-width:1.4}
+  .dotr{fill:var(--red)}
+  .doti{fill:var(--ink)}
+  .ringi{fill:none;stroke:var(--ink);stroke-width:1.3}
+  .dotf{fill:var(--faint)}
+
+  /* fan diagram */
+  .fan-fig{margin:2px 0}
+  .fan-fig svg line{stroke:var(--hairhard);stroke-width:1}
+  .fan-fig .lbl{font-size:11.5px;font-style:italic;fill:var(--soft)}
+  .fan-fig .lbltop{font-size:12px;fill:var(--ink)}
+
+  /* loop sequence */
+  .loop svg text{font-family:inherit}
+
+  .foot{
+    position:absolute;left:66px;right:66px;bottom:36px;
+    display:flex;align-items:baseline;gap:14px;
+    border-top:1px solid var(--hair);padding-top:9px;
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  }
+  .foot .run{font-style:italic;letter-spacing:.12em;text-transform:none;font-size:12.5px}
+  .foot .pg{margin-left:auto;font-style:italic;text-transform:none;letter-spacing:.08em;font-size:12.5px;color:var(--soft)}
+
+  .hint{position:fixed;bottom:8px;left:0;right:0;text-align:center;
+    font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#b8b2a4}
+
+  /* timeline (closing) */
+  .tl{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:6px 0 2px;
+    border-top:1.4px solid var(--hairhard);border-bottom:1px solid var(--hair)}
+  .tl .seg{padding:9px 14px 10px 0;border-right:1px solid var(--hair)}
+  .tl .seg:last-child{border-right:none}
+  .tl .d{font-size:12px;font-style:italic;color:var(--red);letter-spacing:.04em}
+  .tl .h{font-size:15px;color:var(--ink);margin:2px 0 4px}
+  .tl .p{font-size:13px;line-height:1.4;color:var(--soft)}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- ============ 1 · PREMISE / ROLE ============ -->
+<section class="page">
+  <div class="eyebrow">The premise · the role</div>
+  <h1 class="headline">Because every company now buys the same models, competitive advantage accrues to <em>deployment</em>, not to intelligence itself.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="two">
+        <div>
+          <p>Intelligence used to be scarce. It no longer is: the same frontier models are available to anyone able to pay for them, and every enterprise is already reaching for the same stack. If everyone can buy the capability, then the capability alone cannot be anyone's moat.</p>
+          <p>What remains scarce is judgment about <em>where</em> intelligence belongs in a particular business, <em>how</em> it should be wired into the work, and <em>why</em> a given step deserves a model at all. Someone has to decide where intelligence belongs — and, just as often, where it does not.<sup class="ref">1</sup></p>
+        </div>
+        <div>
+          <p>That someone is the forward deployed engineer. The role turns business understanding into working software, end to end: shadowing the work, mapping it, building the agent, proving it with evidence, and standing behind it once it carries real responsibility in production.</p>
+          <p>An FDE is not the average of a consultant and an engineer but the <em>best</em> of both. The value sits at the bridge between the two disciplines, where a single person can weigh a workflow's ROI against its risk and its odds of shipping.<sup class="ref">2</sup></p>
+          <div class="fan-fig">
+            <svg width="360" height="94" viewBox="0 0 360 94" aria-hidden="true">
+              <line x1="180" y1="20" x2="40" y2="74"/><line x1="180" y1="20" x2="110" y2="74"/>
+              <line x1="180" y1="20" x2="180" y2="74"/><line x1="180" y1="20" x2="250" y2="74"/>
+              <line x1="180" y1="20" x2="320" y2="74"/>
+              <text class="lbltop" x="180" y="14" text-anchor="middle" font-style="italic">one frontier model</text>
+              <text class="lbl" x="40" y="88" text-anchor="middle">firm A</text>
+              <text class="lbl" x="110" y="88" text-anchor="middle">firm B</text>
+              <text class="lbl" x="180" y="88" text-anchor="middle">firm C</text>
+              <text class="lbl" x="250" y="88" text-anchor="middle">firm D</text>
+              <text class="lbl" x="320" y="88" text-anchor="middle">firm E</text>
+            </svg>
+            <div class="cap">The same intelligence reaches every competitor; only deployment distinguishes them.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> Judgment lives at the bridge, and it sounds like this: <b>“this design gives 80% accuracy and isn't worth the risk; this other workflow has higher ROI, lower risk, and ships faster.”</b> Most people arrive strong on one side of that sentence and must deliberately build the other.</p>
+      <p class="sn"><span class="n">2</span> Two muscles meet in the role. The <b>business</b> muscle reads workflows, cost, incentives, politics and adoption, and extracts information people don't know they have. The <b>engineering</b> muscle handles models, systems, data, reliability, evals and guardrails. If you can speak both art and science, you can do this job.</p>
+      <p class="sn"><span class="n">3</span> Synthesized from the Varick Agents FDE methodology. The through-line of the whole handout: intelligence is fast becoming a commodity; deployment is the craft that is not.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">1 / 12</span></div>
+</section>
+
+<!-- ============ 2 · OPERATING LOOP ============ -->
+<section class="page">
+  <div class="eyebrow">The operating loop</div>
+  <h1 class="headline">The whole job runs as one loop — <em>audit, build, evals, deploy, observe, improve</em> — in which each stage earns the right to the next.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="loop fan-fig">
+        <svg width="900" height="58" viewBox="0 0 900 58" aria-hidden="true">
+          <g font-size="19" fill="#1a160f" font-style="italic">
+            <text x="0" y="24">Audit</text>
+            <text x="150" y="24">Build</text>
+            <text x="290" y="24">Evals</text>
+            <text x="410" y="24">Deploy</text>
+            <text x="560" y="24">Observe</text>
+            <text x="720" y="24">Improve</text>
+          </g>
+          <g stroke="#b9b2a1" stroke-width="1" fill="none">
+            <path d="M100 18 L142 18"/><path d="M232 18 L282 18"/><path d="M368 18 L402 18"/>
+            <path d="M498 18 L552 18"/><path d="M668 18 L712 18"/>
+            <path d="M838 18 C900 18 900 50 450 50 C40 50 0 30 -2 26" marker-end=""/>
+          </g>
+          <text x="450" y="47" text-anchor="middle" font-size="13" font-style="italic" fill="#7a7365">↻ the loop runs again</text>
+        </svg>
+      </div>
+      <div class="two">
+        <div>
+          <p>No stage is optional and none may be skipped ahead of its predecessor. The audit identifies the right problem and maps how the work is truly done — the consulting half of the role. The build turns that map into a reliable agent. Evals prove the system behaves before it is trusted with anything real. Deployment makes it work <em>inside</em> the business, and observation feeds what breaks back into the next turn of the wheel.</p>
+        </div>
+        <div>
+          <p>The loop is not a line that ends; it compounds. Workflows are interconnected, so improving one system almost always exposes the next bottleneck: fixing one step frees capacity downstream and reveals the constraint upstream. That is why the work scales from 10&times;-ing a single workflow toward improving the whole business.<sup class="ref">1</sup> The next engagement is usually visible from inside the first.<sup class="ref">2</sup></p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> A blunt way to hold the sequence in mind: <b>each stage earns the right to the next.</b> Build before you have audited and you automate the wrong thing beautifully; deploy before you have evals and you are asking for trust you have not earned.</p>
+      <p class="sn"><span class="n">2</span> The three stages that most define the role map onto three verbs — <b>audit</b> (find the right problem), <b>evals</b> (prove correctness), and <b>deploy</b> (make it stick, and make sure nothing breaks). The rest is scaffolding around those three.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">2 / 12</span></div>
+</section>
+
+<!-- ============ 3 · DISCOVERY — real process ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 1 · Discovery</div>
+  <h1 class="headline">The documented process is rarely the real process — every “simple” step hides the work that actually matters.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="two">
+        <div>
+          <p>Ask someone “what's step one?” and they will say “an email arrives.” Build for that and you build for a system that does not map to reality. The real trigger is forty-odd senders, no two formatted alike, with data buried in PDFs, screenshots and forwarded threads — and half of them are exceptions in disguise (“same as last time,” “Sarah already signed off”), routed by logic that lives entirely in one person's head. Those thirty unwritten rules for what counts <em>are</em> the specification. Discovering them is the job.</p>
+          <p><span class="lead">The spreadsheet.</span> There is never one; there are four — one real, two stale, and a personal desktop copy that quietly disagrees. Columns drift, and a typo does not throw an error, it simply becomes the new source of truth. It is a database, a workflow engine and an audit log wearing a grid costume; reverse-engineer all three before replacing any.</p>
+        </div>
+        <div>
+          <p><span class="lead">The internal system.</span> It sits behind a VPN with no API and no export button, where “status” means five different things. The real check is tribal — <em>“region 4 always needs a second look”</em> — and the person who knows the edge cases may be gone within the year.<sup class="ref">1</sup> Capture that knowledge before it walks out the door, because once it does, no model can recover it.</p>
+          <p>None of this appears in the SOP, which is precisely why shadowing beats interviewing. There is exactly one way a workflow goes right and a thousand ways it goes wrong, and the value is in the thousand.<sup class="ref">2</sup></p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> <b>“Region 4 always needs a second look.”</b> No document will ever tell you this. It exists only as a habit in one veteran's hands — the kind of undocumented exception you see only by sitting beside the work while it happens, never by booking an hour to hear it described.</p>
+      <p class="sn"><span class="n">2</span> This is where most failed AI pilots die — the oft-cited <b>~95%</b> — by slapping intelligence everywhere and token-maxing without understanding the work. Discovery is not overhead before the real project; discovery is where the project is won or lost.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">3 / 12</span></div>
+</section>
+
+<!-- ============ 4 · DISCOVERY — fieldcraft ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 1 · Discovery</div>
+  <h1 class="headline">You learn the real process by sitting with the work, not by reading the org chart.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="two">
+        <div>
+          <p><span class="lead">Go where the work happens.</span> Shadow the person for full days rather than booking a one-hour interview. In a meeting people describe the job they <em>think</em> they have; sitting beside them for eight hours you see what actually happens, and in particular you see the undocumented exception the moment something goes wrong. It is also how you build the relationship that carries the entire engagement.<sup class="ref">1</sup></p>
+          <p><span class="lead">Get system access.</span> The ERP and CRM, the four spreadsheets, and the Slack channels where approvals actually live. Read the real artifacts, not the sanitized process document — the approval of record is often a chat message findable only by the person who asked for it.</p>
+        </div>
+        <div>
+          <p><span class="lead">Expect multiple owners.</span> In any large organization several people run the “same” process differently. One source is a sample size of one; sit with more than one before you believe you understand the work.<sup class="ref">2</sup></p>
+          <p><span class="lead">Document the exceptions explicitly.</span> Trace every step of the workflow, then go one level deeper on each — the trigger, the spreadsheet, the internal system all hide real work. Enumerate how things go wrong, because that catalogue is exactly what you will build the system around later.</p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> Say it plainly: <b>the relationship is infrastructure.</b> Discovery is where trust is built and where adoption quietly begins. The rapport you form sitting beside someone for a week is what makes them forgive the system's first mistakes months later.</p>
+      <p class="sn"><span class="n">2</span> A useful reflex when someone describes their process with total confidence: assume you are hearing <b>one</b> valid version of several. The disagreements between owners are not noise to resolve away — they are the exception map, pre-drawn.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">4 / 12</span></div>
+</section>
+
+<!-- ============ 5 · AUDIT — operating map (TABLE) ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 2 · Audit</div>
+  <h1 class="headline">Discovery's raw material becomes a single decision artifact — the operating map — which is itself worth more than it cost.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="prose">
+        <p>The audit takes everything gathered — interviews, emails, spreadsheets, SOPs, systems, approvals and exception paths — traces the findings (bottlenecks, repetitive work, judgment points, required systems, failure modes, automation worth doing), and produces one map the business can act on. It captures five things:</p>
+      </div>
+      <table class="map">
+        <caption>The operating map</caption>
+        <tr><td class="k">Current-state workflow</td><td class="v">How the work actually happens today.</td></tr>
+        <tr><td class="k">Future-state workflow</td><td class="v">The same work, rebuilt around AI.</td></tr>
+        <tr><td class="k">Selected use case</td><td class="v">One workflow, chosen for value.</td></tr>
+        <tr><td class="k">Boundaries</td><td class="v">What the system may and may not do.</td></tr>
+        <tr><td class="k">Expected business value</td><td class="v">Hours, cost and errors — quantified.</td></tr>
+      </table>
+      <div class="prose">
+        <p>A cleanly mapped department — every workflow traced, exceptions included, with a priority-and-ROI matrix of what is worth automating — is enormously valuable before a single line of the system is written.<sup class="ref">1</sup> It is also the trust-building vehicle: underpromise, overdeliver, and let the map surface use cases the client had not considered.</p>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> One FDE's framing: the map alone is <b>“worth 10&times; what they paid.”</b> The audit is a product in its own right, not a preamble to the build — you could stop here and the client would still be ahead.</p>
+      <p class="sn"><span class="n">2</span> A field note on language: some clients react badly to the word <b>“audit”</b> — it sounds like inspection and blame. <b>“Sprint”</b> lands better and buys you the same access. The deliverable is identical; the framing is not.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">5 / 12</span></div>
+</section>
+
+<!-- ============ 6 · AUDIT — routing + buckets ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 2 · Audit</div>
+  <h1 class="headline">Route every step to deterministic software, an agent, or a human in control — then frame the payoff as revenue, risk, or cost.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="two">
+        <div>
+          <p><span class="lead">Deterministic software</span> handles steps whose rules and inputs are predictable. Most of a good solution is exactly this — if/else and API calls — and you should not spend a model on an if-statement.</p>
+          <p><span class="lead">An agent</span> handles steps where the objective is clear but the inputs, path, or required actions vary. Often only three steps of a ten-step workflow genuinely need judgment; the rest is plumbing.<sup class="ref">1</sup></p>
+          <p><span class="lead">A human in control</span> keeps any decision that carries material ambiguity, real accountability, or irreversible consequences. Some workflows should not be touched at all — too risky, already automated, or not enough ROI to justify the effort.<sup class="ref">2</sup></p>
+        </div>
+        <div>
+          <p>Prioritize lengthy, high-volume workflows where the improvement is large enough to matter, and express every expected-value claim in the only three buckets a business actually measures:</p>
+          <p><span class="lead">Revenue uplift</span> — throughput the old process capped, more value per customer, faster reach. <span class="lead">Risk mitigation</span> — fewer errors, auditable decisions, escalation by rule, so failures that were once silent now leave evidence. <span class="lead">Cost savings</span> — hours returned, rework eliminated, cost per run measured and driven down.</p>
+          <p>Every number in the operating map lands in one of these three — quantified, not vibes.</p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> The discipline here is restraint. The instinct to make the whole thing “an AI system” is what produces brittle, expensive agents. Give the model <b>only</b> the steps that vary; let cheap deterministic code do everything predictable around it.</p>
+      <p class="sn"><span class="n">2</span> Deciding what <b>not</b> to automate is as much of the deliverable as deciding what to. A map that honestly marks three workflows “leave alone” is more credible — and more valuable — than one that claims everything is ripe.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">6 / 12</span></div>
+</section>
+
+<!-- ============ 7 · BUILD ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 3 · Build</div>
+  <h1 class="headline">An agent built only for the happy path is worth nothing; all the value is in the thousand ways things go wrong.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="two">
+        <div>
+          <p>Add capability in order. Start with the <span class="lead">agent loop</span> — prompt, model, response, next step, until the task completes or a max-step limit hits — and set the bar high: the task must be solved reliably even when the request is phrased badly, not merely “works if prompted perfectly.” Add <span class="lead">tool use</span> minimally (one API call, one search; the agent decides when), then <span class="lead">guardrails</span>: input validation, a step ceiling, output filtering. Keep <span class="lead">context</span> in the window by default; reach for external memory only when state must outlive the run.</p>
+          <p>The <span class="lead">audit trail</span> is non-negotiable — log every prompt, response, tool call, result, error and timestamp — because if you cannot show the client what the agent is doing, they will never trust it.<sup class="ref">1</sup></p>
+        </div>
+        <div>
+          <p>Then comes the part that separates a demo from a deployable system. <span class="lead">Structured outputs</span> to a defined JSON schema, validated on every response, with retry or escalation on mismatch. <span class="lead">State and recovery</span> — checkpoint every few steps so the agent resumes from its last checkpoint after a deliberate kill. And <span class="lead">explicit failure handling</span>: enumerate the modes — missing data, malformed responses, dead APIs, timeouts, duplicates, partial completion — and define behavior for each, with exponential backoff on external calls&nbsp;<svg class="spark" width="66" height="16" viewBox="0 0 66 16" aria-hidden="true"><polyline points="3,14 18,11 33,7 48,3"/><circle class="dotr" cx="60" cy="3" r="2.4"/></svg>&nbsp;<span style="font-size:13px;font-style:italic;color:#7a7365">1s · 2s · 4s · 8s, capped at 16s.</span></p>
+          <p>This is precisely where Phase 1 pays off: you can only build around real failure modes if you watched them happen.<sup class="ref">2</sup></p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> Put another way: <b>visible traces are the antidote to agent fear.</b> The single most trust-building feature you can ship is not accuracy — it is the ability to open any run and show, step by step, exactly what the agent did and why.</p>
+      <p class="sn"><span class="n">2</span> On model choice: don't optimize for model-agnosticism early. <b>Pick one model and one platform, get genuinely good at it,</b> and benchmark others from that foundation. Use cheaper models for simple subtasks — but your value is judgment about the workflow, not the inference layer.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">7 / 12</span></div>
+</section>
+
+<!-- ============ 8 · EVALS — small multiples ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 4 · Evals</div>
+  <h1 class="headline">A golden dataset turns non-determinism into evidence — every run graded on right data, required steps, expert match, and safety.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="sm-row">
+        <div class="sm"><div class="t">The normal case</div>
+          <svg width="150" height="30" viewBox="0 0 150 30" aria-hidden="true">
+            <circle class="doti" cx="20" cy="15" r="4.5"/><circle class="doti" cx="60" cy="15" r="4.5"/><circle class="doti" cx="100" cy="15" r="4.5"/><circle class="doti" cx="140" cy="15" r="4.5"/></svg></div>
+        <div class="sm"><div class="t">The edge case</div>
+          <svg width="150" height="30" viewBox="0 0 150 30" aria-hidden="true">
+            <circle class="doti" cx="20" cy="15" r="4.5"/><circle class="doti" cx="60" cy="15" r="4.5"/><circle class="ringi" cx="100" cy="15" r="4"/><circle class="ringi" cx="140" cy="15" r="4"/></svg></div>
+        <div class="sm"><div class="t">Incomplete info</div>
+          <svg width="150" height="30" viewBox="0 0 150 30" aria-hidden="true">
+            <circle class="ringi" cx="20" cy="15" r="4"/><circle class="dotf" cx="60" cy="15" r="2.6"/><circle class="dotf" cx="100" cy="15" r="2.6"/><circle class="dotr" cx="140" cy="15" r="4.5"/></svg></div>
+        <div class="sm"><div class="t">Ambiguous request</div>
+          <svg width="150" height="30" viewBox="0 0 150 30" aria-hidden="true">
+            <circle class="doti" cx="20" cy="15" r="4.5"/><circle class="ringi" cx="60" cy="15" r="4"/><circle class="dotf" cx="100" cy="15" r="2.6"/><circle class="dotr" cx="140" cy="15" r="4.5"/></svg></div>
+        <div class="sm"><div class="t">High-risk action</div>
+          <svg width="150" height="30" viewBox="0 0 150 30" aria-hidden="true">
+            <circle class="doti" cx="20" cy="15" r="4.5"/><circle class="doti" cx="60" cy="15" r="4.5"/><circle class="doti" cx="100" cy="15" r="4.5"/><circle class="dotr" cx="140" cy="15" r="4.5"/></svg></div>
+      </div>
+      <div class="sm-legend">Each chart reads left to right across the four dimensions: right data · required steps · matches expert · safe to act.&nbsp; <span style="color:#1a160f">●</span> expected behavior&nbsp; <span style="color:#1a160f">○</span> failure, evidence kept&nbsp; <span style="color:#a00000">●</span> escalated to a human by rule.</div>
+      <div class="two">
+        <div>
+          <p>Build the golden dataset from roughly twenty or more <em>real</em> cases with hand-labeled ideal outputs, chosen deliberately to cover the whole terrain: the normal case, the edge case, incomplete information, an ambiguous request, and a high-risk action.<sup class="ref">1</sup></p>
+        </div>
+        <div>
+          <p>The point of the grid above is that a good system need not pass everything the same way. A failure with its evidence kept is useful; an escalation to a human on a high-risk action is not a failure at all but the system doing exactly what it should.<sup class="ref">2</sup></p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> Twenty is a floor, not a target. The dataset is a living thing: every real failure you meet in production earns a new row, so the eval suite gets sharper precisely where the system has already been caught being wrong.</p>
+      <p class="sn"><span class="n">2</span> The mental shift the grid encodes: <b>“escalate to a human” is a pass.</b> A system that knows the four situations it must hand off is far more deployable than one that confidently acts on all of them.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">8 / 12</span></div>
+</section>
+
+<!-- ============ 9 · EVAL REPORT ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 4 · Evals</div>
+  <h1 class="headline">Failed runs are not embarrassments; they are the evidence that improves the system.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="two">
+        <div>
+          <p>The evaluation report is the artifact that earns the system its next level of authority. It states the pass rate, sorts the failures into named categories with counts, and derives the operating rules that follow from them.</p>
+          <div class="passline">
+            <span class="big">41 / 50</span>
+            <span class="lab">graded runs passed &mdash; 82%
+              <svg class="spark" width="72" height="18" viewBox="0 0 72 18" aria-hidden="true"><polyline points="4,15 24,11 44,8 60,4"/><circle class="dotr" cx="60" cy="4" r="2.6"/></svg>
+            </span>
+          </div>
+          <div style="font-size:13px;font-style:italic;color:#7a7365;margin-top:3px">Pass rate across successive eval rounds, climbing as failures feed back in.</div>
+          <div style="margin-top:14px">
+            <div class="fbar-row"><span class="fl">missing data</span><span class="fbar"><i style="width:100%"></i></span><b>5</b></div>
+            <div class="fbar-row"><span class="fl">wrong record pulled</span><span class="fbar"><i style="width:80%"></i></span><b>4</b></div>
+            <div style="font-size:13px;font-style:italic;color:#7a7365;margin-top:8px">Nine failures, two categories — each one a specific, fixable defect.</div>
+          </div>
+        </div>
+        <div>
+          <div class="rules">
+            <div class="r"><span class="lead">Confidence.</span> Below a threshold — here 0.80 — the system must escalate rather than act.</div>
+            <div class="r"><span class="lead">Escalation.</span> High-risk actions always reach a person, by rule and not by the model's judgment call.</div>
+            <div class="r"><span class="lead">Readiness.</span> An honest statement of maturity: <em>“pilot — human review on every action.”</em></div>
+          </div>
+          <p style="margin-top:14px">Investigate every failure, categorize it, and feed it back into the golden dataset and the harness. That closed loop — not any single pass rate — is what “turning non-determinism into evidence” actually means.<sup class="ref">1</sup></p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> The reframe worth internalizing: a red eval is not a bad day, it is <b>free labeled data</b> pointing at exactly what to fix next. Teams that flinch at failures hide them; teams that harvest them compound.</p>
+      <p class="sn"><span class="n">2</span> For genuinely subjective outputs — a presentation, a draft — where beauty is in the eye of the beholder, evals alone will never reach perfect. <b>Let past examples define “good,”</b> gather as much prior data as you can, and bake in a human-in-the-loop that keeps improving the harness.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">9 / 12</span></div>
+</section>
+
+<!-- ============ 10 · DEPLOYMENT ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 5 · Deployment</div>
+  <h1 class="headline">Never open with “first, migrate off your ERP” — build on top of what exists, and grant autonomy only as it is earned.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="two">
+        <div>
+          <p><span class="lead">Integrate with what already exists.</span> A company that spent years and millions moving onto a platform will tell you to get lost if you propose ripping it out. Building <em>on top of</em> it — and connecting it to the rest of the stack — is where the value is, and it is your edge over rip-and-replace vendors.<sup class="ref">1</sup></p>
+          <p><span class="lead">Test in a controlled environment.</span> A sandbox inside the company's own infrastructure, where you can run, inspect and debug safely before anything touches live records.</p>
+        </div>
+        <div>
+          <p><span class="lead">Increase autonomy gradually.</span> Begin with the smallest useful action and grant more authority only after the system proves reliable&nbsp;<svg class="spark" width="80" height="20" viewBox="0 0 80 20" aria-hidden="true"><polyline points="2,17 20,17 20,12 38,12 38,8 56,8 56,3 78,3"/><circle class="dotr" cx="78" cy="3" r="2.6"/></svg></p>
+          <p style="text-indent:0"><span style="font-size:13px;font-style:italic;color:#7a7365">Shadow mode → human approves every action → approval only for risky actions → autonomy where earned.</span></p>
+          <p>A pattern worth pushing for: the agent does intake, validation and drafting; a human approves; the system completes the back half and the record is posted.<sup class="ref">2</sup></p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> The opening move sets the relationship. “Migrate off your ERP” makes you a threat to years of someone's work; <b>“let's wire this into what you already have”</b> makes you an ally. The technically harder path is usually the politically survivable one.</p>
+      <p class="sn"><span class="n">2</span> Notice the shape of the autonomy ramp: it never jumps. Each rung is a promise the system has already kept. You are not asking for trust — you are spending trust the evals and the shadow runs have already earned.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">10 / 12</span></div>
+</section>
+
+<!-- ============ 11 · DEPLOYMENT — people ============ -->
+<section class="page">
+  <div class="eyebrow">Phase 5 · Deployment</div>
+  <h1 class="headline">Deployment is a people problem wearing a software costume — and it is your name on the line when production breaks.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="two">
+        <div>
+          <p><span class="lead">You are a risk to your stakeholder.</span> The status quo is safe; sponsoring you is not. If it fails, it is their name on it, not just yours. So de-risk them deliberately: visible traces, human approval gates, gradual autonomy and measurable checkpoints. Prove value before you ask for trust, and never make your sponsor choose between backing you and looking careful.<sup class="ref">1</sup></p>
+          <p>Deployment is also the human phase in the plainest sense — hand-holding adoption, monitoring the KPIs and SLAs that matter, and being the person who knows what to do when something breaks in production.</p>
+        </div>
+        <div>
+          <p><span class="lead">Your job is to get your sponsor promoted.</span> Drive value cost-effectively in the three buckets and make it attributable, so that at review time they can point at a number and say they made it happen. That, far more than architectural elegance, is what makes the next engagement easy.<sup class="ref">2</sup></p>
+          <p>Meeting people face to face makes all of this dramatically easier. Every hard conversation — a missed SLA, a required approval gate, a scope cut — goes better between people who have shared a room. The relationship is infrastructure, and it is load-bearing.</p>
+        </div>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> The four de-risking mechanisms are not just good engineering; they are <b>political instruments.</b> Every visible trace and approval gate is a sentence your sponsor can say to <em>their</em> boss to explain why backing you was the prudent call.</p>
+      <p class="sn"><span class="n">2</span> A quietly radical reframing of success: it is not “the system works,” it is <b>“my sponsor got promoted because the system worked.”</b> Optimize for attributable, defensible value and the technical wins take care of themselves.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">11 / 12</span></div>
+</section>
+
+<!-- ============ 12 · CLOSING / 30-DAY ============ -->
+<section class="page">
+  <div class="eyebrow">The job · proving capability</div>
+  <h1 class="headline">An FDE owns the path from messy workflow to trusted production system — and then does it again.</h1>
+  <div class="grid">
+    <div class="main">
+      <div class="prose">
+        <p>The role is the best combination of two sides, not the average: business muscle (workflows, cost, incentives, risk, adoption, politics) fused with engineering muscle (models, systems, data, reliability, evals, harnesses). You can build the skill before you hold the title — do the job for thirty days and finish with evidence.</p>
+      </div>
+      <div class="tl">
+        <div class="seg"><div class="d">Days 1–7</div><div class="h">Build the agent</div><div class="p">Loop, two tools, guardrails, deliberate memory, audit trail — run it on one real, formerly manual workflow. <em>A working agent.</em></div></div>
+        <div class="seg"><div class="d">Days 8–14</div><div class="h">Make it production-ready</div><div class="p">Structured outputs, schema validation, failure modes, checkpointing, resume. <em>A recoverable system.</em></div></div>
+        <div class="seg"><div class="d">Days 15–21</div><div class="h">Make it measurable</div><div class="p">Retries and backoff, a failure taxonomy, a golden dataset, an eval suite, cost per query. <em>An evaluated system.</em></div></div>
+        <div class="seg"><div class="d">Days 22–30</div><div class="h">Defend it</div><div class="p">Pain point, why AI belongs, architecture, evals, economics — pitched to real businesses. <em>A complete case study.</em></div></div>
+      </div>
+      <div class="prose">
+        <p>Rehearse the story twice: once for an engineer — architecture, decisions, tradeoffs — and once for an executive — problem, outcome, evidence, risk, in plain language.<sup class="ref">1</sup></p>
+      </div>
+    </div>
+    <div class="aside">
+      <p class="sn"><span class="n">1</span> The two-audience rehearsal is the whole point: <b>if the system cannot be explained in both rooms, it isn't done.</b> An FDE who can only talk to engineers has built half a deliverable; the other half is the sentence an executive repeats to approve it.</p>
+      <p class="sn"><span class="n">2</span> Where judgment lives, one last time: <b>“this design gives 80% accuracy and isn't worth the risk; this other workflow has higher ROI, lower risk, and ships faster.”</b> Master that sentence, in both dialects, and you can do this job.</p>
+    </div>
+  </div>
+  <div class="foot"><span class="run">Forward Deployed Engineering — a working handout</span><span class="pg">12 / 12</span></div>
+</section>
+
+</div></div>
+<div class="hint">← → navigate · click to advance</div>
+
+<script>
+  const pages=[...document.querySelectorAll('.page')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),pages.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),pages.length-1);
+    pages.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(pages.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>

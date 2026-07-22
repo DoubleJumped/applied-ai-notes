@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Deployment Issue — a magazine feature on Forward Deployed Engineering</title>
+<style>
+  :root{
+    --paper:#e9e5db;         /* warm surround behind the page */
+    --page:#ffffff;          /* white, not ivory */
+    --page-warm:#fbf9f4;     /* barely-warm variant for chapter pages */
+    --ink:#141210;
+    --sub:#3d3a34;
+    --soft:#6f6a60;
+    --faint:#a8a29a;
+    --rule:#d8d3c8;
+    --hair:#c9c4b8;
+    --ox:#6b1f2a;            /* oxblood — the one editorial accent */
+    --black:#0b0a09;
+    --disp:"Didot","Bodoni 72","Bodoni MT","Didot LT STD",Georgia,"Times New Roman",serif;
+    --body:Georgia,"Times New Roman",serif;
+    --util:"Helvetica Neue",Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:var(--body);
+    background:var(--paper);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1600px;height:900px;position:relative;flex:none}
+
+  .spread{
+    position:absolute;inset:0;
+    background:var(--page);
+    padding:52px 96px 46px;
+    display:flex;flex-direction:column;
+    opacity:0;visibility:hidden;
+    transform:translateY(8px);
+    transition:opacity .3s ease,transform .3s ease,visibility 0s .3s;
+  }
+  .spread.active{opacity:1;visibility:visible;transform:none;transition:opacity .3s ease,transform .3s ease}
+  @media (prefers-reduced-motion:reduce){.spread{transition:none}}
+  .spread.warm{background:var(--page-warm)}
+  .spread.dark{background:var(--black);color:#f4efe6}
+
+  /* ---------- folios ---------- */
+  .folio{
+    display:flex;align-items:center;
+    font-family:var(--util);
+    font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--faint);font-weight:500;
+    padding-bottom:11px;border-bottom:1px solid var(--rule);
+    flex:none;
+  }
+  .folio.bottom{border-bottom:none;border-top:1px solid var(--rule);padding-bottom:0;padding-top:11px;margin-top:auto}
+  .folio .dot{margin:0 .7em;color:var(--ox)}
+  .folio .r{margin-left:auto;letter-spacing:.2em}
+  .dark .folio,.dark .folio.bottom{border-color:#2a2621;color:#6a655b}
+  .dark .folio .dot{color:#b06b74}
+
+  /* ---------- kickers ---------- */
+  .kicker{
+    font-family:var(--util);
+    font-size:12px;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--ox);font-weight:600;
+  }
+  .kicker .n{color:var(--faint)}
+  .dark .kicker{color:#c98a92}
+
+  /* ---------- display headlines ---------- */
+  h1,h2{font-family:var(--disp);font-weight:400;letter-spacing:-.005em}
+  .hl{font-size:96px;line-height:.9;letter-spacing:-.01em}
+  .hl.big{font-size:118px}
+  .hl.sm{font-size:74px;line-height:.94}
+  .em{font-style:italic}
+  .ox{color:var(--ox)}
+
+  /* ---------- body prose / columns ---------- */
+  .cols{
+    column-gap:44px;column-rule:1px solid var(--rule);
+    font-size:15.5px;line-height:1.62;color:var(--sub);
+    text-align:justify;hyphens:auto;
+  }
+  .cols.c2{column-count:2}
+  .cols.c3{column-count:3;font-size:14.5px;column-gap:38px}
+  .cols p{margin-bottom:14px;text-indent:1.2em}
+  .cols p.lead{text-indent:0}
+  .cols p:last-child{margin-bottom:0}
+  .cols b,.cols strong{color:var(--ink);font-weight:700}
+  .cols .sc{font-family:var(--util);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:var(--ox)}
+
+  .dropcap::first-letter{
+    font-family:var(--disp);
+    float:left;
+    font-size:106px;line-height:.66;
+    padding:8px 12px 0 0;
+    color:var(--ox);font-weight:400;
+  }
+
+  /* ---------- standfirst ---------- */
+  .standfirst{
+    font-family:var(--disp);font-style:italic;font-weight:400;
+    font-size:27px;line-height:1.42;color:var(--sub);
+    max-width:1180px;
+  }
+  .byline{
+    font-family:var(--util);font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--faint);font-weight:600;
+  }
+  .byline b{color:var(--ox);font-weight:600}
+
+  /* ---------- pull quotes ---------- */
+  .pull{
+    font-family:var(--disp);font-style:italic;font-weight:400;
+    color:var(--ink);position:relative;
+  }
+  .pull .mark{font-family:var(--disp);color:var(--ox);font-style:italic}
+  .pull.side{
+    font-size:44px;line-height:1.06;
+    border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);
+    padding:22px 0;
+  }
+  .pull.side .mark{font-size:88px;line-height:0;display:inline-block;transform:translateY(20px);margin-right:6px}
+
+  /* ---------- utility caption / small ---------- */
+  .cap{font-family:var(--util);font-size:11px;letter-spacing:.06em;color:var(--soft);line-height:1.5}
+  .cap b{color:var(--ink);font-weight:700}
+
+  /* ---------- cover ---------- */
+  .cover{padding:44px 96px 42px}
+  .masthead{
+    font-family:var(--util);font-size:12px;letter-spacing:.4em;text-transform:uppercase;
+    color:var(--soft);font-weight:600;display:flex;align-items:center;
+    border-bottom:2px solid var(--ink);padding-bottom:14px;
+  }
+  .masthead .r{margin-left:auto;letter-spacing:.24em;color:var(--faint)}
+  .cover-title{font-family:var(--disp);font-weight:400;font-size:230px;line-height:.82;letter-spacing:-.02em}
+  .cover-title .l2{display:block;padding-left:.02em}
+  .cover-sub{
+    font-family:var(--disp);font-style:italic;font-size:34px;line-height:1.3;color:var(--sub);
+    max-width:1000px;
+  }
+  .coverlines{
+    font-family:var(--util);text-transform:uppercase;
+    display:flex;gap:0;border-top:1px solid var(--hair);padding-top:16px;
+  }
+  .coverlines .item{flex:1;padding-right:26px}
+  .coverlines .item + .item{border-left:1px solid var(--rule);padding-left:26px}
+  .coverlines .num{color:var(--ox);font-size:11px;letter-spacing:.2em;font-weight:700;display:block;margin-bottom:7px}
+  .coverlines .txt{color:var(--soft);font-size:12.5px;letter-spacing:.05em;line-height:1.45;font-weight:500;text-transform:none;font-family:var(--body)}
+
+  /* ---------- chapter break (dark full-bleed) ---------- */
+  .chapter{justify-content:center;align-items:flex-start}
+  .chapter .kicker{margin-bottom:38px}
+  .chapter .statement{font-family:var(--disp);font-size:132px;line-height:.9;letter-spacing:-.015em;max-width:1360px}
+  .chapter .after{
+    font-family:var(--disp);font-style:italic;font-size:26px;line-height:1.45;color:#b8b1a6;
+    max-width:900px;margin-top:40px;
+  }
+
+  /* ---------- generic head block ---------- */
+  .head{flex:none}
+  .head .kicker{margin-bottom:20px}
+  .body-area{flex:1;display:flex;min-height:0}
+
+  /* ---------- five-step field grid (discovery) ---------- */
+  .fieldgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:2px solid var(--ink)}
+  .fieldgrid .cell{padding:20px 20px 0 0;border-right:1px solid var(--rule)}
+  .fieldgrid .cell:last-child{border-right:none;padding-right:0}
+  .fieldgrid .st{font-family:var(--util);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ox);font-weight:700;margin-bottom:12px}
+  .fieldgrid .st .no{color:var(--faint)}
+  .fieldgrid h3{font-family:var(--disp);font-weight:400;font-size:25px;line-height:1.02;margin-bottom:12px}
+  .fieldgrid p{font-size:13px;line-height:1.5;color:var(--soft)}
+
+  /* ---------- audit map (editorial ledger) ---------- */
+  .ledger{width:100%;border-collapse:collapse}
+  .ledger tr{border-bottom:1px solid var(--rule)}
+  .ledger tr:first-child{border-top:2px solid var(--ink)}
+  .ledger .idx{font-family:var(--util);font-size:11px;letter-spacing:.14em;color:var(--ox);font-weight:700;width:56px;padding:16px 0;vertical-align:top}
+  .ledger .term{font-family:var(--disp);font-size:27px;font-weight:400;padding:14px 30px 14px 0;vertical-align:top;width:400px;line-height:1.02}
+  .ledger .desc{font-size:14.5px;color:var(--soft);line-height:1.5;padding:16px 0;vertical-align:top}
+
+  /* three destinations / buckets */
+  .triad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:2px solid var(--ink)}
+  .triad .c{padding:24px 30px 0 0;border-right:1px solid var(--rule)}
+  .triad .c:last-child{border-right:none;padding-right:0}
+  .triad .rn{font-family:var(--disp);font-size:44px;color:var(--ox);line-height:1;margin-bottom:14px}
+  .triad h3{font-family:var(--disp);font-weight:400;font-size:30px;line-height:1;margin-bottom:14px}
+  .triad p{font-size:14px;line-height:1.56;color:var(--soft)}
+
+  /* build reference architecture */
+  .arch{display:grid;grid-template-columns:repeat(4,1fr);gap:0 34px;border-top:2px solid var(--ink);padding-top:6px}
+  .arch .step{padding:20px 0 20px}
+  .arch .step:not(:nth-child(4n)){border-right:1px solid var(--rule);padding-right:34px}
+  .arch .num{font-family:var(--util);font-size:11px;letter-spacing:.14em;color:var(--ox);font-weight:700;margin-bottom:9px}
+  .arch h3{font-family:var(--disp);font-weight:400;font-size:24px;line-height:1;margin-bottom:9px}
+  .arch p{font-size:12.5px;line-height:1.5;color:var(--soft)}
+
+  /* ---------- evals data spread (infographic) ---------- */
+  .data-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:56px;flex:1;min-height:0}
+  .matrix{width:100%;border-collapse:collapse;font-family:var(--util)}
+  .matrix caption{caption-side:top;text-align:left;font-family:var(--util);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ox);font-weight:700;padding-bottom:14px}
+  .matrix th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);font-weight:700;text-align:center;padding:0 6px 12px;vertical-align:bottom;border-bottom:2px solid var(--ink)}
+  .matrix th.lab{text-align:left;width:230px}
+  .matrix td{padding:13px 6px;text-align:center;border-bottom:1px solid var(--rule);font-size:16px}
+  .matrix td.case{text-align:left;font-family:var(--disp);font-size:20px;color:var(--ink)}
+  .matrix .yes{color:var(--ink);font-weight:700}
+  .matrix .no{color:var(--ox);font-weight:700}
+  .matrix .dash{color:var(--faint)}
+  .matrix .esc{color:var(--ox);font-family:var(--body);font-style:italic;font-size:13px}
+  .matrix-legend{font-family:var(--util);font-size:10.5px;letter-spacing:.02em;color:var(--soft);margin-top:14px;line-height:1.7}
+  .matrix-legend .no{color:var(--ox);font-weight:700}
+
+  .report-side{display:flex;flex-direction:column}
+  .bignum{font-family:var(--disp);font-size:118px;line-height:.82;color:var(--ink)}
+  .bignum .pct{color:var(--ox)}
+  .bignum-lab{font-family:var(--util);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);font-weight:600;margin-top:4px}
+  .passbar{height:10px;background:#ece8df;margin-top:18px;position:relative}
+  .passbar i{position:absolute;inset:0 18% 0 0;background:var(--ink)}
+  .failhead{font-family:var(--util);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ox);font-weight:700;margin:26px 0 14px}
+  .failrow{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-family:var(--util);font-size:12.5px;color:var(--sub)}
+  .failrow .fl{width:150px;letter-spacing:.02em}
+  .failrow .fb{flex:1;height:9px;background:#ece8df}
+  .failrow .fb i{display:block;height:100%;background:var(--ox)}
+  .failrow .fc{font-family:var(--disp);font-size:22px;color:var(--ink);width:22px;text-align:right}
+
+  /* deployment two-column feature with pull */
+  .feature-2{display:grid;grid-template-columns:1.15fr 1fr;gap:56px;flex:1;min-height:0}
+  .rulehead{font-family:var(--disp);font-size:23px;font-weight:400;margin:0 0 8px;line-height:1.08}
+  .rulehead .n{font-family:var(--util);font-size:12px;letter-spacing:.14em;color:var(--ox);font-weight:700;vertical-align:middle;margin-right:10px}
+  .rule-block{border-top:1px solid var(--rule);padding:16px 0}
+  .rule-block:first-child{border-top:2px solid var(--ink)}
+  .rule-block p{font-size:13.5px;line-height:1.55;color:var(--soft)}
+
+  /* colophon */
+  .colophon{display:grid;grid-template-columns:1.3fr 1fr;gap:60px;flex:1;min-height:0;align-items:center}
+  .colophon .loop{font-family:var(--util);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#8a857b;font-weight:600;line-height:2.1}
+  .colophon .loop .on{color:#f4efe6}
+  .colophon .loop .sep{color:var(--ox);margin:0 .5em}
+  .colo-list{border-top:1px solid #2a2621}
+  .colo-list .row{display:flex;gap:20px;padding:12px 0;border-bottom:1px solid #2a2621;font-family:var(--util);font-size:12px}
+  .colo-list .row .k{width:120px;letter-spacing:.16em;text-transform:uppercase;color:#8a857b;font-weight:600;flex:none}
+  .colo-list .row .v{color:#cfc8bd;line-height:1.5}
+
+  .hint{position:fixed;bottom:9px;left:0;right:0;text-align:center;font-family:var(--util);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#b9b3a6;font-weight:500}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- ============ 1 · COVER ============ -->
+<section class="spread cover warm">
+  <div class="masthead">Forward Deployed<span class="r">Vol. I · No. 01 · July 2026</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" style="margin-bottom:26px">The Deployment Issue</div>
+    <h1 class="cover-title">Where<span class="l2 em ox">intelligence</span><span class="l2">belongs.</span></h1>
+    <p class="cover-sub" style="margin-top:36px">Every company can now buy intelligence. The edge is no longer who has it — but where, how, and why they put it to work.</p>
+  </div>
+  <div class="coverlines">
+    <div class="item"><span class="num">01 — The Premise</span><span class="txt">Why intelligence alone can never be the moat.</span></div>
+    <div class="item"><span class="num">02 — The Field</span><span class="txt">Sitting with the work the org chart never shows.</span></div>
+    <div class="item"><span class="num">03 — The Evidence</span><span class="txt">Turning non-determinism into a report you can trust.</span></div>
+    <div class="item"><span class="num">04 — The Loop</span><span class="txt">From one messy workflow to the whole business.</span></div>
+  </div>
+</section>
+
+<!-- ============ 2 · FEATURE OPENER / STANDFIRST ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">The Feature — page 02</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">The Premise</div>
+    <h1 class="hl big" style="margin-top:24px">The bridge<br>across the <span class="em ox">aisle</span>.</h1>
+  </div>
+  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:52px;flex:1;min-height:0;margin-top:34px;align-items:end">
+    <div class="cols c2 dropcap" style="align-self:stretch">
+      <p class="lead">Every company can now buy intelligence. The same frontier models are available to anyone willing to pay, and every enterprise is already reaching for the same stack. If the capability is universal, then the capability cannot be the advantage.</p>
+      <p>The edge moves elsewhere — into deployment. Into <b>where, how, and why</b> a particular business puts intelligence to work, and, just as often, where it refuses to. Someone has to stand at the seam between the messy reality of the work and the clean promise of the model, and decide what belongs on each side.</p>
+      <p>That person is the <span class="sc">forward deployed engineer</span> — the best combination of consultant and engineer, not the average of the two. Their job is to turn a genuine understanding of the business into working software that carries real responsibility, end to end.</p>
+      <p>What follows is that job as a working playbook: audit, build, evals, deploy — then watch, improve, and run the loop again.</p>
+    </div>
+    <div style="align-self:end">
+      <p class="standfirst">A feature on the discipline of bringing artificial intelligence into a real business — and the person who owns the path from a messy workflow to a system the company will trust.</p>
+      <p class="byline" style="margin-top:30px">Synthesized from the <b>Varick Agents</b> FDE Methodology</p>
+    </div>
+  </div>
+  <div class="folio bottom">Forward Deployed Engineering<span class="r">02</span></div>
+</section>
+
+<!-- ============ 3 · CHAPTER BREAK (dark) ============ -->
+<section class="spread dark chapter">
+  <div class="kicker">Chapter One — The Premise</div>
+  <h2 class="statement">Intelligence alone <span class="em ox">cannot</span> be the moat.</h2>
+  <p class="after">If everyone can access it, the edge is no longer who has intelligence. It is where, how, and why they use it — and who is willing to decide where it does not belong.</p>
+</section>
+
+<!-- ============ 4 · THE ROLE ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">The Role — page 04</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">The Role</div>
+    <h1 class="hl" style="margin-top:20px">Consultant <span class="em">and</span> engineer —<br>not the average of the two.</h1>
+  </div>
+  <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:56px;flex:1;min-height:0;margin-top:30px;align-items:stretch">
+    <div class="cols c2 dropcap" style="align-self:stretch">
+      <p class="lead">Business reality is how the work actually happens today — the tools, the people, the exceptions, the incentives, the quiet politics. FDE judgment is the ruling on where intelligence belongs and where it does not. Between them sits a deployed system: working software carrying real responsibility inside the company.</p>
+      <p>The business side is consulting muscle — workflows, cost, risk, adoption, and the art of extracting information people don't know they have. The technical side is engineering muscle — models, APIs, data, reliability, evals, guardrails, harnesses. The rare thing is not either half. It is one person fluent in both.</p>
+      <p>Judgment lives at the bridge. <b>"This design gives eighty percent accuracy and isn't worth the risk; this other workflow has higher return, lower risk, and ships faster."</b> That sentence is the whole job. FDEs are in demand precisely because they control how intelligence enters the business — the one decision no model can make for itself.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="pull side"><span class="mark">&ldquo;</span>If you can speak both art <span class="em">and</span> science, you can do this job.</div>
+      <p class="cap" style="margin-top:22px">Most people start strong on one side and must deliberately build the other. The bridge is not a compromise — it is the <b>best</b> of each, kept intact.</p>
+    </div>
+  </div>
+  <div class="folio bottom">Forward Deployed Engineering<span class="r">04</span></div>
+</section>
+
+<!-- ============ 5 · THE OPERATING LOOP ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">The Method — page 05</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">The Operating Loop</div>
+    <h1 class="hl" style="margin-top:20px">Six stages. <span class="em ox">One</span> loop.</h1>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0">
+    <div style="font-family:var(--disp);font-size:56px;line-height:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 18px;color:var(--ink)">
+      <span>Audit</span><span class="ox" style="font-size:34px">→</span>
+      <span>Build</span><span class="ox" style="font-size:34px">→</span>
+      <span>Evals</span><span class="ox" style="font-size:34px">→</span>
+      <span>Deploy</span><span class="ox" style="font-size:34px">→</span>
+      <span>Observe</span><span class="ox" style="font-size:34px">→</span>
+      <span>Improve</span><span class="ox" style="font-size:44px;font-style:italic">&#8635;</span>
+    </div>
+    <p class="cap" style="margin-top:20px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)">The loop runs again — improving one workflow exposes the next bottleneck</p>
+    <div class="triad" style="margin-top:44px">
+      <div class="c"><div class="rn">I</div><h3>Audit</h3><p>Identifies the right problem and maps reality — the consulting half of the role, done before a line of code is written.</p></div>
+      <div class="c"><div class="rn">II</div><h3>Evals</h3><p>Prove the system behaves correctly before it is allowed to carry real responsibility. No evidence, no authority.</p></div>
+      <div class="c"><div class="rn">III</div><h3>Deployment</h3><p>Make it work inside the business — adoption, monitoring, and the discipline of nothing quietly breaking.</p></div>
+    </div>
+  </div>
+  <div class="pull side" style="border-bottom:none;padding-bottom:0;font-size:34px;margin-top:6px"><span class="mark">&ldquo;</span>Each stage earns the right to the next.</div>
+  <div class="folio bottom">Forward Deployed Engineering<span class="r">05</span></div>
+</section>
+
+<!-- ============ 6 · DISCOVERY — the real process ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">Phase One — page 06</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">Phase One <span class="n">— Discovery</span></div>
+    <h1 class="hl sm" style="margin-top:20px">The documented process is <span class="em ox">rarely</span> the real one.</h1>
+  </div>
+  <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:52px;margin-top:26px">
+    <div class="cols c2 dropcap">
+      <p class="lead">Ask someone for step one and you will hear, "an email arrives." Watch instead, and every simple step turns out to hide the real work. The trigger is forty-odd senders, no two formatted alike, half of them exceptions in disguise — "same as last time," "Sarah already signed off" — with the routing logic living entirely in one person's head.</p>
+      <p>Those unwritten rules for what counts <b>are</b> the specification. If you do not look, you build for a system that does not map to reality — which is how most AI pilots quietly fail.</p>
+    </div>
+    <div style="display:flex;align-items:center">
+      <p class="standfirst" style="font-size:24px">The spreadsheet is a database, a workflow engine, and an audit log wearing a grid costume. Reverse-engineer all three before you replace any.</p>
+    </div>
+  </div>
+  <div class="fieldgrid" style="margin-top:30px">
+    <div class="cell"><div class="st"><span class="no">01 —</span> The trigger</div><h3>An email arrives</h3><p>Forty-plus senders, no two alike. Half are exceptions in disguise. Routing lives in one head.</p></div>
+    <div class="cell"><div class="st"><span class="no">02 —</span> Re-keyed by hand</div><h3>Into a spreadsheet</h3><p>Which one? There are four. A typo doesn't error — it becomes the new source of truth.</p></div>
+    <div class="cell"><div class="st"><span class="no">03 —</span> Tribal knowledge</div><h3>An internal system</h3><p>No API, no export. "Status" means five things. The one expert retires in eight months.</p></div>
+    <div class="cell"><div class="st"><span class="no">04 —</span> Exists as a reply</div><h3>Approved in Slack</h3><p>The approval of record is a chat message, findable only by whoever asked for it.</p></div>
+    <div class="cell"><div class="st"><span class="no">05 —</span> Thirty fields</div><h3>Entered in the ERP</h3><p>The official system arrives last, fed by everything undocumented that came before it.</p></div>
+  </div>
+  <div class="folio bottom">Discovery<span class="r">06</span></div>
+</section>
+
+<!-- ============ 7 · DISCOVERY — fieldcraft ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">Phase One — page 07</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">Phase One <span class="n">— Discovery</span></div>
+    <h1 class="hl sm" style="margin-top:20px">Sit with the work,<br>not the <span class="em ox">org chart</span>.</h1>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1.05fr;gap:58px;flex:1;min-height:0;margin-top:30px;align-items:center">
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="pull side"><span class="mark">&ldquo;</span>In an hour, people describe the job they <span class="em">think</span> they have.</div>
+      <p class="cap" style="margin-top:22px;font-size:12.5px">Beside them for eight, you see the undocumented exception actually happen. Discovery is also where trust is built — the relationship is infrastructure for everything that follows.</p>
+    </div>
+    <div class="cols c2" style="align-self:stretch;display:flex;flex-direction:column;justify-content:center">
+      <p class="lead"><span class="sc">Shadow full days.</span> A one-hour interview buys you the story people tell about their work. Eight hours at the desk buys you the work itself — especially the exception nobody wrote down.</p>
+      <p><span class="sc">Get system access.</span> The ERP, the CRM, the four spreadsheets, the Slack channels where approvals actually live. Read the real artifacts, never the SOP.</p>
+      <p><span class="sc">Expect multiple owners.</span> In any large organization several people run the "same" process differently. One source is a sample size of one — sit with more.</p>
+      <p><span class="sc">Chase the exceptions.</span> There is one way for the work to go right and a thousand ways to go wrong. Capture the tribal knowledge before it walks out the door.</p>
+    </div>
+  </div>
+  <div class="folio bottom">Discovery<span class="r">07</span></div>
+</section>
+
+<!-- ============ 8 · AUDIT — the operating map ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">Phase Two — page 08</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">Phase Two <span class="n">— The Audit</span></div>
+    <h1 class="hl sm" style="margin-top:20px">Produce the <span class="em ox">operating map</span>.</h1>
+  </div>
+  <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:56px;flex:1;min-height:0;margin-top:26px;align-items:center">
+    <div>
+      <table class="ledger">
+        <tr><td class="idx">I</td><td class="term">Current-state workflow</td><td class="desc">How the work actually happens today, exceptions and all.</td></tr>
+        <tr><td class="idx">II</td><td class="term">Future-state workflow</td><td class="desc">The same work, rebuilt around AI.</td></tr>
+        <tr><td class="idx">III</td><td class="term">Selected use case</td><td class="desc">One workflow, chosen for value.</td></tr>
+        <tr><td class="idx">IV</td><td class="term">Boundaries</td><td class="desc">What the system may — and may not — do.</td></tr>
+        <tr><td class="idx">V</td><td class="term">Expected value</td><td class="desc">Hours, cost, and errors, quantified.</td></tr>
+      </table>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="pull side"><span class="mark">&ldquo;</span>The audit is a product in its <span class="em">own</span> right.</div>
+      <p class="cap" style="margin-top:22px;font-size:12.5px">A cleanly mapped department with an ROI matrix is worth money before anything is built. Collect the context, trace the findings, and hand back one decision artifact the business can act on. <b>Underpromise, overdeliver.</b> (A field note: some clients bristle at the word "audit" — "sprint" lands better.)</p>
+    </div>
+  </div>
+  <div class="folio bottom">The Audit<span class="r">08</span></div>
+</section>
+
+<!-- ============ 9 · AUDIT — automate or not / three buckets ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">Phase Two — page 09</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">Phase Two <span class="n">— The Audit</span></div>
+    <h1 class="hl sm" style="margin-top:20px">What to automate — and what to <span class="em ox">leave alone</span>.</h1>
+  </div>
+  <div style="margin-top:26px">
+    <div class="triad">
+      <div class="c"><div class="rn" style="font-style:italic">i.</div><h3>Deterministic software</h3><p>When the rules and inputs are predictable. Most of a good solution is this — don't spend a model on an if-statement.</p></div>
+      <div class="c"><div class="rn" style="font-style:italic">ii.</div><h3>An agent</h3><p>When the objective is clear but the inputs, path, or actions vary. Often only three steps of ten actually need judgment.</p></div>
+      <div class="c"><div class="rn" style="font-style:italic">iii.</div><h3>A human in control</h3><p>When the decision carries material ambiguity, accountability, or irreversible consequences.</p></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:2px solid var(--ink);margin-top:34px">
+    <div class="c" style="padding:22px 30px 0 0;border-right:1px solid var(--rule)">
+      <div style="font-family:var(--util);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ox);font-weight:700;margin-bottom:12px">The only three things a business measures</div>
+      <h3 style="font-family:var(--disp);font-size:32px;font-weight:400;line-height:1;margin-bottom:12px">Revenue uplift</h3>
+      <p style="font-size:14px;line-height:1.56;color:var(--soft)">Reach customers faster, drive more value per customer, unlock throughput the old process capped.</p>
+    </div>
+    <div class="c" style="padding:22px 30px 0 0;border-right:1px solid var(--rule)">
+      <div style="height:22px"></div>
+      <h3 style="font-family:var(--disp);font-size:32px;font-weight:400;line-height:1;margin-bottom:12px">Risk mitigation</h3>
+      <p style="font-size:14px;line-height:1.56;color:var(--soft)">Fewer errors, auditable decisions, escalation by rule — the failures that were silent now leave evidence.</p>
+    </div>
+    <div class="c" style="padding:22px 0 0 0">
+      <div style="height:22px"></div>
+      <h3 style="font-family:var(--disp);font-size:32px;font-weight:400;line-height:1;margin-bottom:12px">Cost savings</h3>
+      <p style="font-size:14px;line-height:1.56;color:var(--soft)">Hours returned, rework eliminated, cost per run measured and driven relentlessly down.</p>
+    </div>
+  </div>
+  <div class="pull side" style="border-bottom:none;padding-bottom:0;font-size:30px;margin-top:26px"><span class="mark">&ldquo;</span>Every expected-value claim lands in one of these three — quantified, not vibes.</div>
+  <div class="folio bottom">The Audit<span class="r">09</span></div>
+</section>
+
+<!-- ============ 10 · CHAPTER BREAK (dark) ============ -->
+<section class="spread dark chapter">
+  <div class="kicker">Chapter Two — The Build</div>
+  <h2 class="statement">Build for the <span class="em ox">unhappy</span> paths.</h2>
+  <p class="after">There is one way a thing goes right and a thousand ways it goes wrong. An agent built for the happy path is worth nothing; the one that handles the exceptions is the one worth deploying.</p>
+</section>
+
+<!-- ============ 11 · BUILD — reference architecture ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">Phase Three — page 11</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">Phase Three <span class="n">— The Build</span></div>
+    <h1 class="hl sm" style="margin-top:18px">Add capability in <span class="em ox">this order</span>.</h1>
+  </div>
+  <div class="arch" style="margin-top:26px">
+    <div class="step"><div class="num">01 — Agent loop</div><h3>The engine</h3><p>Prompt → model → response → next step, until done or a max-step limit hits.</p></div>
+    <div class="step"><div class="num">02 — Tool use</div><h3>Reach out</h3><p>Start minimal — one API call, one search. The agent decides when to call them.</p></div>
+    <div class="step"><div class="num">03 — Guardrails</div><h3>Fence it in</h3><p>Input validation, a max-step limit, output filtering. The safe operating envelope.</p></div>
+    <div class="step"><div class="num">04 — Audit trail</div><h3>Show your work</h3><p>Log every prompt, tool call, result, error, timestamp. No visible traces, no trust.</p></div>
+    <div class="step"><div class="num">05 — Structured output</div><h3>A contract</h3><p>A defined JSON schema, validated on every response. Retry or escalate on mismatch.</p></div>
+    <div class="step"><div class="num">06 — State &amp; recovery</div><h3>Survive a kill</h3><p>Checkpoint every few steps. Kill it deliberately — it must resume where it stopped.</p></div>
+    <div class="step"><div class="num">07 — Failure handling</div><h3>Name the modes</h3><p>Missing data, dead APIs, timeouts, duplicates — enumerate each and define the behavior.</p></div>
+    <div class="step"><div class="num">08 — Retries &amp; backoff</div><h3>Try again, wisely</h3><p>Exponential on every external call: 1s · 2s · 4s · 8s, capped. Escalate when they run out.</p></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1.05fr 1fr;gap:56px;flex:1;min-height:0;margin-top:30px;align-items:center">
+    <div class="pull side" style="font-size:38px"><span class="mark">&ldquo;</span>No visible traces, no <span class="em ox">trust</span>.</div>
+    <p class="cap" style="font-size:13px;line-height:1.6">Pick one model and one agent platform and get genuinely good at it. Use cheaper models for simple subtasks and cache to manage cost — but <b>your value is judgment about the workflow, not the inference layer.</b></p>
+  </div>
+  <div class="folio bottom">The Build<span class="r">11</span></div>
+</section>
+
+<!-- ============ 12 · EVALS — DATA SPREAD (infographic) ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">Phase Four — page 12</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">Phase Four <span class="n">— The Evidence</span></div>
+    <h1 class="hl sm" style="margin-top:18px">Turn non-determinism into <span class="em ox">evidence</span>.</h1>
+    <p class="cap" style="margin-top:14px;font-size:13px;max-width:900px">A golden dataset of real cases with hand-labeled ideal outputs — every run graded on four dimensions, every failure kept.</p>
+  </div>
+  <div class="data-grid" style="margin-top:24px">
+    <table class="matrix">
+      <caption>The evaluation cases</caption>
+      <tr><th class="lab">Case type</th><th>Right<br>data</th><th>Required<br>steps</th><th>Matches<br>expert</th><th>Safe to<br>act</th></tr>
+      <tr><td class="case">The normal case</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td class="case">The edge case</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td class="case">Incomplete information</td><td class="no">✗</td><td class="dash">—</td><td class="dash">—</td><td class="esc">→ human</td></tr>
+      <tr><td class="case">An ambiguous request</td><td class="yes">✓</td><td class="no">✗</td><td class="dash">—</td><td class="esc">→ human</td></tr>
+      <tr><td class="case">A high-risk action</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="esc">→ human</td></tr>
+    </table>
+    <div class="report-side">
+      <div class="bignum">82<span class="pct">%</span></div>
+      <div class="bignum-lab">41 of 50 graded runs passed</div>
+      <div class="passbar"><i></i></div>
+      <div class="failhead">Failure categories — 9 runs</div>
+      <div class="failrow"><span class="fl">missing data</span><span class="fb"><i style="width:100%"></i></span><span class="fc">5</span></div>
+      <div class="failrow"><span class="fl">wrong record pulled</span><span class="fb"><i style="width:80%"></i></span><span class="fc">4</span></div>
+      <p class="cap" style="margin-top:22px;font-size:12px;line-height:1.6"><b>The rules that fall out:</b> below 0.80 confidence, escalate. High-risk actions always reach a person — by rule, not judgment. Readiness stated honestly: <span class="em" style="font-family:var(--disp)">"pilot — human review on every action."</span></p>
+    </div>
+  </div>
+  <div class="matrix-legend" style="margin-top:10px">✓ expected behavior &nbsp;·&nbsp; <span class="no">✗</span> failure, with the evidence kept &nbsp;·&nbsp; → human escalated by rule &nbsp;—&nbsp; <em style="font-style:italic">Failed runs are not embarrassments. They are the product.</em></div>
+  <div class="folio bottom">The Evidence<span class="r">12</span></div>
+</section>
+
+<!-- ============ 13 · DEPLOYMENT — people problem ============ -->
+<section class="spread">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">Phase Five — page 13</span></div>
+  <div class="head" style="margin-top:30px">
+    <div class="kicker">Phase Five <span class="n">— Deployment</span></div>
+    <h1 class="hl sm" style="margin-top:18px">A people problem wearing a <span class="em ox">software costume</span>.</h1>
+  </div>
+  <div class="feature-2" style="margin-top:28px">
+    <div class="cols c2 dropcap" style="align-self:stretch">
+      <p class="lead">Never open with "first, migrate off your ERP." A company that spent years and millions moving onto a platform will tell you to get lost. Build on top of the current stack and connect it — that is the edge over every rip-and-replace vendor.</p>
+      <p>Test inside a sandbox in the company's own infrastructure, where you can run, inspect, and debug safely. Then increase autonomy gradually: <b>shadow mode → approve every action → approve only the risky ones → autonomy where earned.</b> Begin with the smallest useful action; grant authority only after reliability is proven.</p>
+      <p>Two political realities are worth engineering around. You are a risk to your sponsor — the status quo is safe, and bringing you in is not; if it fails, it is their name on it. So de-risk them, visibly. And your real job is to get that sponsor promoted: drive value in the three buckets, make it attributable, and at review time they can point to it. Face to face makes every hard conversation easier. The relationship is infrastructure.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="rule-block"><h3 class="rulehead"><span class="n">01</span>Integrate with what exists</h3><p>Build on top of the current stack. That's the edge over rip-and-replace.</p></div>
+      <div class="rule-block"><h3 class="rulehead"><span class="n">02</span>Test in a controlled space</h3><p>A sandbox inside their own infrastructure — run, inspect, debug safely.</p></div>
+      <div class="rule-block"><h3 class="rulehead"><span class="n">03</span>Earn autonomy gradually</h3><p>Smallest useful action first. Authority follows proven reliability, never precedes it.</p></div>
+      <div class="pull side" style="margin-top:20px;font-size:28px"><span class="mark">&ldquo;</span>When it breaks, it's <span class="em">your</span> name on the line.</div>
+    </div>
+  </div>
+  <div class="folio bottom">Deployment<span class="r">13</span></div>
+</section>
+
+<!-- ============ 14 · COLOPHON / CLOSING (dark) ============ -->
+<section class="spread dark">
+  <div class="folio">The Deployment Issue<span class="dot">·</span>July 2026<span class="r">Colophon — page 14</span></div>
+  <div style="margin-top:26px">
+    <div class="kicker">Phase Six — Observe, Improve, Repeat</div>
+    <h1 class="hl big" style="margin-top:22px;color:#f4efe6">From messy<br>workflow to <span class="em ox">trusted</span><br>system.</h1>
+  </div>
+  <div class="colophon">
+    <div>
+      <p class="standfirst" style="color:#b8b1a6;max-width:640px">The next workflow is usually obvious from inside the first. Bottlenecks are interconnected — fixing one exposes the constraint upstream and frees capacity downstream. That is how one workflow becomes the whole business.</p>
+      <div class="loop" style="margin-top:34px">
+        <span class="on">Audit</span><span class="sep">→</span><span class="on">Build</span><span class="sep">→</span><span class="on">Evals</span><span class="sep">→</span><span class="on">Deploy</span><span class="sep">→</span>Observe<span class="sep">→</span>Improve<span class="sep">&#8635;</span>
+      </div>
+    </div>
+    <div class="colo-list">
+      <div class="row"><span class="k">The role</span><span class="v">The forward deployed engineer — the best of consultant and engineer, kept whole.</span></div>
+      <div class="row"><span class="k">The promise</span><span class="v">Each stage earns the right to the next; the loop runs again.</span></div>
+      <div class="row"><span class="k">The test</span><span class="v">If the system can't be explained to an engineer and an executive both, it isn't done.</span></div>
+      <div class="row"><span class="k">Source</span><span class="v">The Varick Agents FDE Methodology, end to end.</span></div>
+    </div>
+  </div>
+  <div class="folio bottom">The Deployment Issue &nbsp;·&nbsp; Fin.<span class="r">14</span></div>
+</section>
+
+</div></div>
+<div class="hint">← → navigate &nbsp;·&nbsp; click to advance</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.spread')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Forward Deployed Engineering — Swiss playbook</title>
+<style>
+  :root{
+    --ink:#111111;
+    --sub:#555555;
+    --faint:#9a9a9a;
+    --red:#e30613;
+    --grid:#ececec;
+    --num:#ececec;
+    --hair:#dcdcdc;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:#ffffff;
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#dddddd}
+  #stage{width:1600px;height:900px;position:relative;flex:none;background:#ffffff;overflow:hidden;transform-origin:center}
+
+  /* visible modular 12-column grid — Müller-Brockmann hairline field */
+  .field{
+    position:absolute;left:100px;top:90px;width:1400px;height:730px;pointer-events:none;z-index:1;
+    background-image:
+      repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 116.6667px),
+      repeating-linear-gradient(to bottom, var(--grid) 0 1px, transparent 1px 104.2857px);
+    border-right:1px solid var(--grid);
+    border-bottom:1px solid var(--grid);
+  }
+
+  .slide{
+    position:absolute;inset:0;
+    opacity:0;visibility:hidden;
+    transition:opacity .30s ease,visibility 0s .30s;
+  }
+  .slide.active{opacity:1;visibility:visible;transition:opacity .30s ease}
+  @media (prefers-reduced-motion:reduce){.slide{transition:none}}
+
+  .geo{position:absolute;inset:0;z-index:2}
+  .body{position:absolute;inset:0;padding:82px 100px 40px;display:flex;flex-direction:column;z-index:3}
+  .spacer{flex:1}
+
+  /* giant compositional numeral */
+  .n{position:absolute;z-index:2;font-weight:700;color:var(--num);line-height:.66;letter-spacing:-.05em;font-size:300px;user-select:none}
+
+  .eyebrow{
+    font-size:15px;letter-spacing:.01em;color:var(--sub);font-weight:500;
+    display:flex;align-items:center;
+  }
+  .eyebrow::before{content:"";display:inline-block;width:10px;height:10px;background:var(--red);margin-right:14px;flex:none}
+
+  h1{font-size:74px;line-height:.98;letter-spacing:-.035em;font-weight:700;max-width:1020px}
+  h1.xl{font-size:118px;line-height:.92;letter-spacing:-.045em;max-width:1180px}
+  h1.mid{font-size:56px;line-height:1.0;letter-spacing:-.03em;max-width:1060px}
+  .accentword{color:var(--red)}
+
+  .lede{font-size:21px;line-height:1.45;color:var(--sub);font-weight:400;max-width:720px;margin-top:22px}
+  .big{font-size:24px;line-height:1.35;color:var(--ink);font-weight:500;max-width:900px}
+  .statement{font-size:30px;font-weight:700;letter-spacing:-.02em}
+
+  .foot{display:flex;gap:22px;align-items:center;font-size:12.5px;letter-spacing:.02em;color:#c2c2c2;font-weight:500}
+  .foot .active{color:var(--red)}
+  .foot .pg{margin-left:auto;color:var(--ink);font-weight:700;letter-spacing:.05em}
+
+  /* flow / pipeline */
+  .flow{display:flex;gap:16px;align-items:baseline;font-size:34px;font-weight:700;letter-spacing:-.02em;color:var(--ink);flex-wrap:wrap}
+  .flow .sep{color:#cccccc;font-weight:400}
+  .flow .dim{color:#c8c8c8}
+  .flow .on{color:var(--red)}
+  .loopnote{font-size:13px;letter-spacing:.02em;color:var(--faint);font-weight:500;margin-top:18px}
+
+  /* typographic columns (no cards) */
+  .items{display:grid;gap:26px}
+  .item{border-top:2px solid var(--ink);padding-top:14px}
+  .item.red{border-top-color:var(--red)}
+  .item .ix{font-size:13px;font-weight:700;color:var(--red);letter-spacing:.02em;display:block;margin-bottom:8px}
+  .item .tag{font-size:12px;letter-spacing:.02em;color:var(--faint);font-weight:500;margin-bottom:6px}
+  .item h3{font-size:19px;font-weight:700;letter-spacing:-.012em;margin-bottom:8px;line-height:1.05}
+  .item p{font-size:13.5px;line-height:1.45;color:var(--sub);font-weight:400}
+  .item .big3{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--red);line-height:1;margin-bottom:6px}
+
+  /* three-across role */
+  .role{display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr;gap:22px;align-items:start}
+  .role .arw{align-self:center;font-size:22px;color:#cfcfcf;text-align:center}
+  .role .col{border-top:2px solid var(--ink);padding-top:14px}
+  .role .col.mid{border-top-color:var(--red)}
+  .role .col .tag{font-size:12px;letter-spacing:.02em;color:var(--faint);font-weight:600;margin-bottom:10px;display:block}
+  .role .col.mid .tag{color:var(--red)}
+  .role .col p{font-size:15px;line-height:1.5;color:var(--sub)}
+
+  /* hairline table */
+  table{border-collapse:collapse;width:100%;margin-top:10px}
+  th{text-align:left;font-size:13px;font-weight:700;letter-spacing:.01em;padding:13px 16px;border-bottom:2px solid var(--ink);color:var(--ink)}
+  th.c{text-align:center}
+  td{padding:13px 16px;border-bottom:1px solid var(--hair);font-size:16px;color:var(--ink);vertical-align:top;font-weight:400}
+  td.k{font-weight:700;white-space:nowrap}
+  td.muted{color:var(--sub)}
+  td.c{text-align:center;font-weight:700}
+  td.red{color:var(--red)}
+  .legend{font-size:12.5px;color:var(--faint);margin-top:14px;font-weight:400}
+
+  .hint{position:fixed;bottom:12px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:.14em;text-transform:lowercase;color:#c9c9c9;font-weight:500;z-index:20}
+
+  /* geometric primitives */
+  .dot{position:absolute;border-radius:50%;background:var(--red)}
+  .ring{position:absolute;border-radius:50%;border:2px solid var(--red)}
+  .bar{position:absolute;background:var(--red)}
+  .barK{position:absolute;background:var(--ink)}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+<div class="field"></div>
+
+<!-- 1 · title — the red circle -->
+<section class="slide active">
+  <div class="geo">
+    <div class="dot" style="width:640px;height:640px;left:1120px;top:130px"></div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">an end-to-end playbook</div>
+    <div class="spacer"></div>
+    <h1 class="xl">AI forward<br>deployed<br>engineering.</h1>
+    <p class="lede">how intelligence enters a business — from discovery to a trusted production system. synthesized from the Varick Agents FDE methodology.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span class="active">overview</span><span>discovery</span><span>audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">01 / 18</span></div>
+  </div>
+</section>
+
+<!-- 2 · buy intelligence — the fan -->
+<section class="slide">
+  <div class="geo"><div class="n" style="right:80px;top:60px">02</div></div>
+  <div class="body">
+    <div class="eyebrow">the premise</div>
+    <h1 class="mid" style="margin-top:26px">every company can now<br>buy intelligence.</h1>
+    <p class="lede">the same foundational capability is available to anyone able to pay for it — and every enterprise is already using the same stack.</p>
+    <div style="margin-top:34px">
+      <svg width="900" height="250" viewBox="0 0 900 250" aria-hidden="true">
+        <line x1="450" y1="46" x2="90" y2="196" stroke="#cfcfcf" stroke-width="1.5"/>
+        <line x1="450" y1="46" x2="270" y2="196" stroke="#cfcfcf" stroke-width="1.5"/>
+        <line x1="450" y1="46" x2="450" y2="196" stroke="#cfcfcf" stroke-width="1.5"/>
+        <line x1="450" y1="46" x2="630" y2="196" stroke="#cfcfcf" stroke-width="1.5"/>
+        <line x1="450" y1="46" x2="810" y2="196" stroke="#cfcfcf" stroke-width="1.5"/>
+        <rect x="360" y="0" width="180" height="46" fill="#e30613"/>
+        <text x="450" y="29" text-anchor="middle" fill="#fff" font-family="Helvetica Neue,Helvetica,Arial" font-size="14" font-weight="700">a foundational model</text>
+        <g font-family="Helvetica Neue,Helvetica,Arial" font-size="13" font-weight="600" fill="#111">
+          <rect x="30" y="196" width="120" height="42" fill="none" stroke="#111" stroke-width="1.5"/><text x="90" y="222" text-anchor="middle">company a</text>
+          <rect x="210" y="196" width="120" height="42" fill="none" stroke="#111" stroke-width="1.5"/><text x="270" y="222" text-anchor="middle">company b</text>
+          <rect x="390" y="196" width="120" height="42" fill="none" stroke="#111" stroke-width="1.5"/><text x="450" y="222" text-anchor="middle">company c</text>
+          <rect x="570" y="196" width="120" height="42" fill="none" stroke="#111" stroke-width="1.5"/><text x="630" y="222" text-anchor="middle">company d</text>
+          <rect x="750" y="196" width="120" height="42" fill="none" stroke="#111" stroke-width="1.5"/><text x="810" y="222" text-anchor="middle">company e</text>
+        </g>
+      </svg>
+    </div>
+    <div class="spacer"></div>
+    <div class="foot"><span class="active">overview</span><span>discovery</span><span>audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">02 / 18</span></div>
+  </div>
+</section>
+
+<!-- 3 · statement — the diagonal red bar -->
+<section class="slide">
+  <div class="geo">
+    <div class="bar" style="width:960px;height:64px;right:-120px;top:250px;transform:rotate(-45deg);transform-origin:right center"></div>
+    <div class="n" style="right:64px;bottom:40px;transform:rotate(45deg);transform-origin:right bottom">03</div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">the premise</div>
+    <div class="spacer"></div>
+    <h1 style="font-size:88px;line-height:.98;max-width:960px">if everyone can access it,<br>intelligence alone<br>cannot be the moat.</h1>
+    <p class="lede">the edge is no longer who has intelligence. it is where, how, and why they use it. someone has to decide where intelligence belongs — and where it does not.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span class="active">overview</span><span class="pg">03 / 18</span></div>
+  </div>
+</section>
+
+<!-- 4 · the role — the red bridge -->
+<section class="slide">
+  <div class="geo"><div class="n" style="right:80px;top:56px">04</div></div>
+  <div class="body">
+    <div class="eyebrow">the role</div>
+    <h1 class="mid" style="margin-top:26px">that person is the<br>forward deployed engineer.</h1>
+    <div class="role" style="margin-top:48px">
+      <div class="col"><span class="tag">business reality</span><p>how the work actually happens today — tools, people, exceptions, incentives, politics.</p></div>
+      <div class="arw">→</div>
+      <div class="col mid"><span class="tag">FDE judgment</span><p>where intelligence belongs, and where it does not. the bridge between both sides of the aisle.</p></div>
+      <div class="arw">→</div>
+      <div class="col"><span class="tag">deployed AI system</span><p>working software carrying real responsibility inside the business.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">the best combination of consultant and engineer — not the average of the two. FDEs are in demand because they control how intelligence enters the business.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span class="active">overview</span><span>discovery</span><span>audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">04 / 18</span></div>
+  </div>
+</section>
+
+<!-- 5 · operating loop — concentric rings -->
+<section class="slide">
+  <div class="geo">
+    <div class="ring" style="width:360px;height:360px;right:110px;top:250px"></div>
+    <div class="ring" style="width:250px;height:250px;right:165px;top:305px"></div>
+    <div class="ring" style="width:140px;height:140px;right:220px;top:360px"></div>
+    <div class="dot" style="width:44px;height:44px;right:268px;top:408px"></div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">the operating loop</div>
+    <h1 style="margin-top:26px">six stages.<br>one loop.</h1>
+    <div class="flow" style="margin-top:36px;max-width:900px">
+      <span>audit</span><span class="sep">→</span><span>build</span><span class="sep">→</span><span>evals</span><span class="sep">→</span><span>deploy</span><span class="sep">→</span><span>observe</span><span class="sep">→</span><span>improve</span>
+    </div>
+    <div class="loopnote">↻ &nbsp;the loop runs again — improving one workflow exposes the next bottleneck</div>
+    <div class="items" style="grid-template-columns:repeat(3,minmax(0,320px));margin-top:44px">
+      <div class="item"><span class="tag">the job, part 1</span><h3>audit</h3><p>identifies the right problem and maps reality — the consulting half of the role.</p></div>
+      <div class="item"><span class="tag">the job, part 2</span><h3>evals</h3><p>prove the system behaves correctly before it carries real responsibility.</p></div>
+      <div class="item red"><span class="tag">the job, part 3</span><h3>deployment</h3><p>makes it work inside the business — adoption, monitoring, nothing breaking.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="statement">each stage earns the right to the next.</div>
+    <div class="spacer"></div>
+    <div class="foot"><span class="active">overview</span><span>discovery</span><span>audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">05 / 18</span></div>
+  </div>
+</section>
+
+<!-- 6 · discovery: real process — five aligned bars -->
+<section class="slide">
+  <div class="geo">
+    <div class="barK" style="width:56px;height:40px;left:1000px;top:250px"></div>
+    <div class="barK" style="width:56px;height:78px;left:1082px;top:212px"></div>
+    <div class="barK" style="width:56px;height:118px;left:1164px;top:172px"></div>
+    <div class="barK" style="width:56px;height:158px;left:1246px;top:132px"></div>
+    <div class="bar" style="width:56px;height:200px;left:1328px;top:90px"></div>
+    <div class="n" style="right:70px;bottom:150px">06</div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">phase 1 · discovery</div>
+    <h1 class="mid" style="margin-top:24px;max-width:820px">the documented process is<br>rarely the real process.</h1>
+    <p class="lede" style="max-width:640px">ask, and you'll hear "an email arrives." watch, and every simple step hides the real work.</p>
+    <div class="items" style="grid-template-columns:repeat(5,1fr);margin-top:40px">
+      <div class="item"><span class="ix">01</span><h3>an email arrives</h3><p>40+ senders, no two alike. routing lives in one person's head.</p></div>
+      <div class="item"><span class="ix">02</span><h3>copied to a spreadsheet</h3><p>which one? there are four. a typo becomes the new source of truth.</p></div>
+      <div class="item"><span class="ix">03</span><h3>an internal system</h3><p>no API, no export. "status" means five things. the expert retires.</p></div>
+      <div class="item"><span class="ix">04</span><h3>approved in Slack</h3><p>the record of approval is a chat message, found only by the asker.</p></div>
+      <div class="item red"><span class="ix">05</span><h3>entered into the ERP</h3><p>30 required fields. the official system arrives last of all.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big" style="max-width:960px">if you don't look, you build for a system that doesn't map to reality — which is how most AI pilots fail.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span class="active">discovery</span><span>audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">06 / 18</span></div>
+  </div>
+</section>
+
+<!-- 7 · discovery fieldcraft — four rules -->
+<section class="slide">
+  <div class="geo"><div class="n" style="right:80px;top:56px">07</div></div>
+  <div class="body">
+    <div class="eyebrow">phase 1 · discovery</div>
+    <h1 style="margin-top:24px">sit with the work,<br>not the org chart.</h1>
+    <div class="items" style="grid-template-columns:repeat(4,1fr);margin-top:48px">
+      <div class="item"><span class="ix">a</span><h3>shadow full days</h3><p>in an hour people describe the job they think they have. beside them for eight, you see the exception actually happen.</p></div>
+      <div class="item"><span class="ix">b</span><h3>get system access</h3><p>ERP, CRM, the four spreadsheets, the Slack approvals. read the real artifacts, not the SOP.</p></div>
+      <div class="item"><span class="ix">c</span><h3>expect multiple owners</h3><p>several people run the "same" process differently. one source is a sample size of one.</p></div>
+      <div class="item red"><span class="ix">d</span><h3>chase the exceptions</h3><p>one way to go right, a thousand ways to go wrong. the unwritten rules are the actual spec.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">discovery is also where trust is built — the relationship is infrastructure for everything that follows.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span class="active">discovery</span><span>audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">07 / 18</span></div>
+  </div>
+</section>
+
+<!-- 8 · operating map — hairline table with red spine -->
+<section class="slide">
+  <div class="geo">
+    <div class="bar" style="width:8px;height:300px;left:100px;top:296px"></div>
+    <div class="n" style="right:80px;top:56px">08</div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">phase 2 · audit</div>
+    <h1 class="mid" style="margin-top:24px">produce the operating map.</h1>
+    <p class="lede">collect context → trace findings → one decision artifact the business can act on.</p>
+    <div style="margin-top:30px;max-width:1120px;padding-left:24px">
+      <table>
+        <tr><th colspan="2">the audit artifact — one operating map</th></tr>
+        <tr><td class="k">current-state workflow</td><td class="muted">how the work actually happens today</td></tr>
+        <tr><td class="k">future-state workflow</td><td class="muted">the same work, rebuilt around AI</td></tr>
+        <tr><td class="k">selected use case</td><td class="muted">one workflow, chosen for value</td></tr>
+        <tr><td class="k">boundaries</td><td class="muted">what the system may and may not do</td></tr>
+        <tr><td class="k">expected business value</td><td class="muted">hours, cost, and errors — quantified</td></tr>
+      </table>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">the audit is a product in its own right — a cleanly mapped department with an ROI matrix is worth money before anything is built.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span class="active">audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">08 / 18</span></div>
+  </div>
+</section>
+
+<!-- 9 · automate or not — the split spectrum bar -->
+<section class="slide">
+  <div class="geo"><div class="n" style="right:80px;top:56px">09</div></div>
+  <div class="body">
+    <div class="eyebrow">phase 2 · audit</div>
+    <h1 class="mid" style="margin-top:24px;max-width:1080px">decide what should be automated —<br>and what should not.</h1>
+    <div style="display:flex;margin-top:44px;max-width:1120px;height:22px">
+      <div style="flex:6;background:#111"></div>
+      <div style="flex:3;background:#8a8a8a"></div>
+      <div style="flex:1;background:#e30613"></div>
+    </div>
+    <div class="role" style="margin-top:22px">
+      <div class="col"><span class="tag">deterministic software</span><p>when the rules and inputs are predictable. most of a good solution is this — don't spend a model on an if-statement.</p></div>
+      <div class="arw">·</div>
+      <div class="col"><span class="tag">an agent</span><p>when the objective is clear but the inputs, path, or actions vary. often only 3 steps of 10 need judgment.</p></div>
+      <div class="arw">·</div>
+      <div class="col mid"><span class="tag">a human in control</span><p>when the decision carries material ambiguity, accountability, or irreversible consequences.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">some workflows shouldn't be touched at all. prioritize lengthy, high-volume workflows where the improvement is large enough to matter.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span class="active">audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">09 / 18</span></div>
+  </div>
+</section>
+
+<!-- 10 · three buckets — three bars -->
+<section class="slide">
+  <div class="geo">
+    <div class="barK" style="width:60px;height:120px;left:1080px;top:250px"></div>
+    <div class="barK" style="width:60px;height:180px;left:1170px;top:190px"></div>
+    <div class="bar" style="width:60px;height:250px;left:1260px;top:120px"></div>
+    <div class="n" style="right:70px;bottom:150px">10</div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">phase 2 · audit</div>
+    <h1 class="mid" style="margin-top:24px;max-width:860px">a business measures<br>exactly three things.</h1>
+    <div class="items" style="grid-template-columns:repeat(3,minmax(0,300px));margin-top:52px">
+      <div class="item"><div class="big3">1</div><h3>revenue uplift</h3><p>reach customers faster, drive more value per customer, unlock throughput the old process capped.</p></div>
+      <div class="item"><div class="big3">2</div><h3>risk mitigation</h3><p>fewer errors, auditable decisions, escalation by rule — the failures that were silent now leave evidence.</p></div>
+      <div class="item"><div class="big3">3</div><h3>cost savings</h3><p>hours returned, rework eliminated, cost per run measured and driven down.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">every expected-value claim in the operating map lands in one of these buckets — quantified, not vibes.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span class="active">audit</span><span>build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">10 / 18</span></div>
+  </div>
+</section>
+
+<!-- 11 · statement — one path, a thousand ways wrong -->
+<section class="slide">
+  <div class="geo">
+    <svg width="760" height="620" viewBox="0 0 760 620" style="position:absolute;right:60px;top:150px" aria-hidden="true">
+      <g stroke="#d4d4d4" stroke-width="1.5">
+        <line x1="20" y1="310" x2="740" y2="20"/><line x1="20" y1="310" x2="740" y2="80"/>
+        <line x1="20" y1="310" x2="740" y2="140"/><line x1="20" y1="310" x2="740" y2="200"/>
+        <line x1="20" y1="310" x2="740" y2="420"/><line x1="20" y1="310" x2="740" y2="480"/>
+        <line x1="20" y1="310" x2="740" y2="540"/><line x1="20" y1="310" x2="740" y2="600"/>
+      </g>
+      <line x1="20" y1="310" x2="740" y2="310" stroke="#e30613" stroke-width="6"/>
+      <circle cx="20" cy="310" r="9" fill="#e30613"/>
+    </svg>
+  </div>
+  <div class="body">
+    <div class="eyebrow">phase 3 · build</div>
+    <div class="spacer"></div>
+    <h1 class="xl" style="max-width:820px">build for the<br><span class="accentword">unhappy</span> paths.</h1>
+    <p class="lede">there is one way something goes right and a thousand ways it goes wrong. an agent built for the happy path is worth nothing; the one that handles the exceptions is the one worth deploying.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span class="active">build</span><span class="pg">11 / 18</span></div>
+  </div>
+</section>
+
+<!-- 12 · build architecture — eight-step staircase -->
+<section class="slide">
+  <div class="geo">
+    <div class="barK" style="width:22px;height:24px;left:1140px;top:214px"></div>
+    <div class="barK" style="width:22px;height:38px;left:1172px;top:200px"></div>
+    <div class="barK" style="width:22px;height:52px;left:1204px;top:186px"></div>
+    <div class="barK" style="width:22px;height:66px;left:1236px;top:172px"></div>
+    <div class="barK" style="width:22px;height:80px;left:1268px;top:158px"></div>
+    <div class="barK" style="width:22px;height:94px;left:1300px;top:144px"></div>
+    <div class="barK" style="width:22px;height:108px;left:1332px;top:130px"></div>
+    <div class="bar" style="width:22px;height:122px;left:1364px;top:116px"></div>
+    <div class="n" style="right:80px;bottom:150px">12</div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">phase 3 · build</div>
+    <h1 class="mid" style="margin-top:22px;max-width:840px">add capability in this order.</h1>
+    <div class="items" style="grid-template-columns:repeat(4,1fr);margin-top:40px;gap:22px 22px">
+      <div class="item"><span class="ix">1</span><h3>agent loop</h3><p>prompt → model → response → next step, until done or a step limit hits.</p></div>
+      <div class="item"><span class="ix">2</span><h3>tool use</h3><p>start minimal — one API call, one search. the agent decides when to call.</p></div>
+      <div class="item"><span class="ix">3</span><h3>guardrails</h3><p>input validation · max-step limit · output filtering.</p></div>
+      <div class="item"><span class="ix">4</span><h3>audit trail</h3><p>log every prompt, tool call, result, error, timestamp. no traces, no trust.</p></div>
+      <div class="item"><span class="ix">5</span><h3>structured outputs</h3><p>a defined JSON schema, validated on every response. retry or escalate.</p></div>
+      <div class="item"><span class="ix">6</span><h3>state &amp; recovery</h3><p>checkpoint every few steps. kill it — it must resume where it stopped.</p></div>
+      <div class="item"><span class="ix">7</span><h3>failure handling</h3><p>missing data, dead APIs, timeouts, duplicates — define behavior for each.</p></div>
+      <div class="item red"><span class="ix">8</span><h3>retries &amp; backoff</h3><p>exponential on every external call: 1s · 2s · 4s · 8s, capped. then escalate.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">pick one model and one agent platform and get genuinely good at it — your value is judgment about the workflow, not the inference layer.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span>audit</span><span class="active">build</span><span>evals</span><span>deploy</span><span>loop</span><span class="pg">12 / 18</span></div>
+  </div>
+</section>
+
+<!-- 13 · evals matrix — hairline table, red marks -->
+<section class="slide">
+  <div class="geo"><div class="n" style="right:80px;top:56px">13</div></div>
+  <div class="body">
+    <div class="eyebrow">phase 4 · evals</div>
+    <h1 class="mid" style="margin-top:22px;max-width:900px">turn non-determinism into evidence.</h1>
+    <p class="lede">a golden dataset of real cases with hand-labeled ideal outputs — graded on four dimensions.</p>
+    <div style="margin-top:22px">
+      <table>
+        <tr><th>the evaluation cases</th><th class="c">right data</th><th class="c">required steps</th><th class="c">matches expert</th><th class="c">safe to act</th></tr>
+        <tr><td class="k">the normal case</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td></tr>
+        <tr><td class="k">the edge case</td><td class="c">✓</td><td class="c">✓</td><td class="c red">✗</td><td class="c red">✗</td></tr>
+        <tr><td class="k">incomplete information</td><td class="c red">✗</td><td class="c">—</td><td class="c">—</td><td class="c red">→ human</td></tr>
+        <tr><td class="k">an ambiguous request</td><td class="c">✓</td><td class="c red">✗</td><td class="c">—</td><td class="c red">→ human</td></tr>
+        <tr><td class="k">a high-risk action</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td><td class="c red">→ human</td></tr>
+      </table>
+      <div class="legend">✓ expected behavior &nbsp;·&nbsp; <span style="color:#e30613">✗ failure, with the evidence kept</span> &nbsp;·&nbsp; <span style="color:#e30613">→ human</span> escalated by rule</div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">no evidence, no autonomy — the eval suite is what earns the system its next level of authority.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span>audit</span><span>build</span><span class="active">evals</span><span>deploy</span><span>loop</span><span class="pg">13 / 18</span></div>
+  </div>
+</section>
+
+<!-- 14 · eval report — hairline bar chart -->
+<section class="slide">
+  <div class="geo"><div class="n" style="right:80px;top:56px">14</div></div>
+  <div class="body">
+    <div class="eyebrow">phase 4 · evals</div>
+    <h1 class="mid" style="margin-top:22px">failed runs are the product.</h1>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:40px;max-width:1180px">
+      <div>
+        <div style="border-top:2px solid #111;padding-top:14px">
+          <div style="font-size:13px;letter-spacing:.02em;color:#999;font-weight:600;margin-bottom:14px">the evaluation report</div>
+          <div style="font-size:64px;font-weight:700;letter-spacing:-.03em;line-height:1">41<span style="font-size:17px;font-weight:400;color:#666;letter-spacing:0"> / 50 graded runs passed — <span style="color:#e30613;font-weight:700">82%</span></span></div>
+          <div style="height:10px;background:#efefef;margin-top:16px"><div style="height:100%;width:82%;background:#e30613"></div></div>
+          <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#999;font-weight:700;margin:26px 0 12px">failure categories — 9 runs</div>
+          <div style="display:flex;align-items:center;gap:14px;font-size:14px;margin-top:10px"><span style="width:150px">missing data</span><div style="flex:1;height:10px;background:#efefef"><div style="height:100%;width:100%;background:#111"></div></div><b style="width:18px;text-align:right">5</b></div>
+          <div style="display:flex;align-items:center;gap:14px;font-size:14px;margin-top:12px"><span style="width:150px">wrong record pulled</span><div style="flex:1;height:10px;background:#efefef"><div style="height:100%;width:80%;background:#111"></div></div><b style="width:18px;text-align:right">4</b></div>
+        </div>
+      </div>
+      <div>
+        <div style="border-top:2px solid #111;padding-top:14px">
+          <div style="font-size:13px;letter-spacing:.02em;color:#999;font-weight:600;margin-bottom:16px">operating rules</div>
+          <div style="display:grid;grid-template-columns:130px 1fr;gap:12px 16px;font-size:14px;line-height:1.45">
+            <b style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#e30613">confidence</b><span style="color:#555">below 0.80, the system must escalate.</span>
+            <b style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#e30613">escalation</b><span style="color:#555">high-risk actions always reach a person — by rule, not judgment call.</span>
+            <b style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#e30613">readiness</b><span style="color:#555">an honest maturity statement: "pilot — human review on every action."</span>
+            <b style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#e30613">subjective</b><span style="color:#555">where beauty is in the eye of the beholder, past examples define "good," and feedback keeps improving the harness.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">investigate every failure, categorize it, feed it back. that is what turning non-determinism into evidence means.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span>audit</span><span>build</span><span class="active">evals</span><span>deploy</span><span>loop</span><span class="pg">14 / 18</span></div>
+  </div>
+</section>
+
+<!-- 15 · deployment — autonomy ramp -->
+<section class="slide">
+  <div class="geo">
+    <div class="barK" style="width:70px;height:90px;left:1090px;top:280px"></div>
+    <div class="barK" style="width:70px;height:160px;left:1190px;top:210px"></div>
+    <div class="bar" style="width:70px;height:230px;left:1290px;top:140px"></div>
+    <div class="n" style="right:70px;bottom:150px">15</div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">phase 5 · deployment</div>
+    <h1 class="mid" style="margin-top:24px">make it work inside the business.</h1>
+    <div class="items" style="grid-template-columns:repeat(3,minmax(0,300px));margin-top:52px">
+      <div class="item"><div class="big3">1</div><h3>integrate with what exists</h3><p>never open with "first, migrate off your ERP." build on top of the current stack — that's the edge over rip-and-replace.</p></div>
+      <div class="item"><div class="big3">2</div><h3>test in a controlled environment</h3><p>a sandbox inside the company's own infrastructure, where you can run, inspect, and debug safely.</p></div>
+      <div class="item red"><div class="big3" style="color:#e30613">3</div><h3>increase autonomy gradually</h3><p>shadow → approve every action → approve only risky actions → autonomy where earned. smallest useful action first.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">the pattern to push for: agent handles intake, validation, and drafting — a human approves — the system completes the rest.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span>audit</span><span>build</span><span>evals</span><span class="active">deploy</span><span>loop</span><span class="pg">15 / 18</span></div>
+  </div>
+</section>
+
+<!-- 16 · adoption & trust — the duo -->
+<section class="slide">
+  <div class="geo"><div class="n" style="right:80px;top:56px">16</div></div>
+  <div class="body">
+    <div class="eyebrow">phase 5 · deployment</div>
+    <h1 class="mid" style="margin-top:24px;max-width:1080px">deployment is a people problem<br>wearing a software costume.</h1>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:48px;max-width:1120px">
+      <div class="item"><h3 style="font-size:22px;margin-bottom:12px">you are a risk to your sponsor</h3><p style="font-size:15px;line-height:1.55">status quo is safe; bringing you in is not — if it fails, it's their name on it. de-risk them: visible traces, human approval gates, gradual autonomy, measurable checkpoints. prove value before asking for trust.</p></div>
+      <div class="item red"><h3 style="font-size:22px;margin-bottom:12px">your job is to get them promoted</h3><p style="font-size:15px;line-height:1.55">drive value cost-effectively in the three buckets and make it attributable, so at review time they can point at it. face to face makes every hard conversation easier — the relationship is infrastructure.</p></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="big">when production breaks, it's your name on the line: know who to call, what to do, and how to fix it.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span>audit</span><span>build</span><span>evals</span><span class="active">deploy</span><span>loop</span><span class="pg">16 / 18</span></div>
+  </div>
+</section>
+
+<!-- 17 · the loop again — concentric rings, red loop -->
+<section class="slide">
+  <div class="geo">
+    <div class="ring" style="width:360px;height:360px;right:110px;top:250px"></div>
+    <div class="ring" style="width:250px;height:250px;right:165px;top:305px;border-style:dashed"></div>
+    <div class="ring" style="width:140px;height:140px;right:220px;top:360px"></div>
+    <div class="dot" style="width:44px;height:44px;right:268px;top:408px"></div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">phase 6 · observe &amp; improve</div>
+    <h1 style="margin-top:24px">the loop<br>runs again.</h1>
+    <p class="lede">watch production — metrics, failure categories, cost per run. feed failures back into the golden dataset and the harness.</p>
+    <div class="flow" style="margin-top:40px;max-width:900px">
+      <span class="dim">audit</span><span class="sep">→</span><span class="dim">build</span><span class="sep">→</span><span class="dim">evals</span><span class="sep">→</span><span class="dim">deploy</span><span class="sep">→</span><span class="on">observe</span><span class="sep">→</span><span class="on">improve</span><span class="on">↻</span>
+    </div>
+    <div class="spacer"></div>
+    <p class="big" style="max-width:960px">bottlenecks are interconnected: fixing one workflow exposes the constraint upstream and frees capacity downstream. the next engagement is usually visible from inside the first — that's how one workflow becomes the whole business.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span>overview</span><span>discovery</span><span>audit</span><span>build</span><span>evals</span><span>deploy</span><span class="active">loop</span><span class="pg">17 / 18</span></div>
+  </div>
+</section>
+
+<!-- 18 · closing — the red circle returns -->
+<section class="slide">
+  <div class="geo">
+    <div class="dot" style="width:600px;height:600px;left:1150px;top:150px"></div>
+  </div>
+  <div class="body">
+    <div class="eyebrow">the job</div>
+    <div class="spacer"></div>
+    <h1 style="font-size:80px;line-height:.98;max-width:1000px">an FDE owns the path from<br>messy workflow to a<br>trusted production system.</h1>
+    <p class="lede">audit → build → evals → deploy → observe → improve. each stage earns the right to the next — and the loop runs again.</p>
+    <div class="spacer"></div>
+    <div class="foot"><span class="active">loop</span><span class="pg">18 / 18</span></div>
+  </div>
+</section>
+
+</div></div>
+<div class="hint">← → navigate · click to advance</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=Math.min(Math.max((parseInt(location.hash.slice(1),10)||1)-1,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    history.replaceState(null,'','#'+(i+1));
+  }
+  function fit(){
+    const s=Math.min(innerWidth/1600,innerHeight/900);
+    document.getElementById('stage').style.transform='scale('+s+')';
+  }
+  addEventListener('resize',fit);fit();show(i);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+  });
+  addEventListener('click',e=>{show(e.clientX<innerWidth*0.25?i-1:i+1)});
+</script>
+</body>
+</html>
