@@ -9,6 +9,8 @@ Working notes on applied AI — talks, papers, experiments.
   - [deck-gallery](skills/deck-gallery/SKILL.md) — card-based content deck; monochrome default, palette in one `:root` block
   - [deck-onyx](skills/deck-onyx/SKILL.md) — cinematic one-idea keynote; glacier-blue default
   - [deck-atlas](skills/deck-atlas/SKILL.md) — zooming spatial map for loop/process content; cobalt default
+- [research/](research/): sourced research write-ups
+  - [ai-capital-delivery-evidence](research/ai-capital-delivery-evidence/): before-and-after evidence for AI in capital project delivery, cost estimating and procurement (Alberta Velocity White Papers, plus DOTs, utilities and contractors)
 - [playbooks/](playbooks/) — synthesized methodologies ready to use
   - [FDE end-to-end playbook](playbooks/fde-end-to-end.md) — discovery → audit → build → evals → deployment → the loop
   - FDE presentation, four visual treatments of the same 18 slides (download and open locally):
