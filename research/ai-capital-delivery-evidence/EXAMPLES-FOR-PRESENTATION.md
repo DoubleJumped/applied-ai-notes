@@ -232,3 +232,47 @@ Examples with sources to back the numbers in a leadership presentation. Pick the
 - **No public, audited case exists yet of a gas or electric utility using AI for capital estimating or bid evaluation.** We searched Enbridge, TC Energy, ATCO, FortisBC, Hydro One, SoCalGas and the UK gas networks. The proven examples come from transportation agencies and contractors. That makes it an opportunity to lead, but say it plainly.
 - **Numbers to avoid:** "WEF: AI cuts project costs 20% and time 15%" and "40–60% capex savings". Both circulate widely, but neither traces to a primary source.
 - **A credible first step:** back-test an estimating model on our own historical project costs, following Wisconsin DOT and Exponent, and screen past tenders for bid patterns, following the US DOT audit. Both use data we already have, and both produce a before-and-after number of our own.
+
+---
+
+## Possible roadmap: how Alberta sequences this across an organization
+
+Alberta doesn't publish a step-by-step rollout plan. The site calls itself "a blueprint for other governments to emulate what Alberta is doing" ([cux4h](https://thevelocitywhitepapers.com/paper/cux4h/)), and the papers are laid out in order. The paper you'd expect to hold the rollout plan, "Managing Change", is an unpublished placeholder that currently says "Content forthcoming". What follows is the sequence the published papers imply.
+
+| Step | What Alberta did | Source |
+|---|---|---|
+| 1. Measure what you have | AI read all 466M lines of code in about 20 hours to map every system, its health and what it does. That became the baseline for every later decision. | [Git Insights](https://thevelocitywhitepapers.com/paper/bbkac/), [Git Insights Ministry](https://thevelocitywhitepapers.com/paper/offjm/) |
+| 2. Pick an approach per system | Four routes, in rising ambition: fix a system in place, rebuild it new, merge overlapping systems into a few, or let AI agents work directly on governed data. All four run at once. | [Four Approaches](https://thevelocitywhitepapers.com/paper/zgym1/) |
+| 3. Build guardrails and a platform before scaling | Standards the AI must follow, automated checks on its work, a three-stage build pipeline (design, build, measure), and one gateway that controls all AI spending and access, with more than one AI vendor. | [Well-Built Harness](https://thevelocitywhitepapers.com/paper/p7p2k/), [AI Factory: Design](https://thevelocitywhitepapers.com/paper/qthji/), [AI Factory: Orchestration](https://thevelocitywhitepapers.com/paper/uwpxr/), [Agentic Stack](https://thevelocitywhitepapers.com/paper/qxlzo/) |
+| 4. Train people in levels | Started with a first cohort of about 65 volunteers. Three levels: prompting (now one week), reusable agents, then building applications. More than 2,000 public servants trained. | [AI Academy](https://thevelocitywhitepapers.com/paper/dt725/) |
+| 5. Change the operating model | "Centralize governance, not delivery." Subject-matter experts build their own tools inside a governed fence, and the central team becomes the place everything is governed. Plan for the sprawl this creates. | [Builder Culture](https://thevelocitywhitepapers.com/paper/oxj36/) |
+| 6. Change management and approvals | Faster drafting is wasted if approvals stay slow ("thirty days to twenty-nine"). The hierarchy and approval chain have to change. | [Compression Problem](https://thevelocitywhitepapers.com/paper/eujjc/) |
+| 7. Measure capability built, not dollars saved | Three measures across the organization: how ready people are, how healthy the systems are, and cost counted properly. | [Measuring Failure and Success](https://thevelocitywhitepapers.com/paper/yu5k9/) |
+| 8. Bring suppliers along | Publish the scope as data, require bids in a structured form, and use AI to compare them. | [Taking the Hill](https://thevelocitywhitepapers.com/paper/m66qi/) |
+
+### The team-structure point
+
+Step 5 is the most relevant to how an AI team should be organized. Alberta's model has two parts:
+- **A central team** that owns governance, the platform and standards.
+- **Delivery pushed out** to specialists in the business, who Alberta calls "builders": finance, public safety, wildfire and so on.
+
+The paper says two things must be in place before that is safe:
+- **Delegated access.** A staff member lends their own permissions to an AI agent through a governed gateway.
+- **Specification-driven building.** People describe what they want, and it's built with the approved tools and templates. This replaces prototypes knocked together with outside tools that never make it to production.
+
+Alberta describes a pendulum between centralized and decentralized IT delivery. Its answer is a third model: an AI-augmented hybrid.
+
+### How this might adapt to an engineering-heavy utility
+
+This mapping is ours, not Alberta's. Alberta's papers are written from inside an IT ministry and cover modernizing software, not rolling AI out into engineering or capital-project groups.
+
+| Alberta step | Possible equivalent for capital delivery |
+|---|---|
+| 1. Measure the estate | Baseline current performance: estimate accuracy by class, bid spread against the engineer's estimate, cycle time from design to tender to award, overrun history |
+| 2. Approach per system | Triage use cases: help with existing work (standards search, document drafting), rebuild a process (estimating model, bid comparison), or consolidate tools |
+| 3. Guardrails and platform | One governed AI platform and gateway, with engineering sign-off rules. AI supports engineers of record; it doesn't replace them. |
+| 4. Tiered training | Prompting for all engineers and PMs, then reusable agents for estimators and buyers, then building for a small builder group |
+| 5. Central governance, spoke delivery | A central AI team owns the platform, standards and evaluation, and business-unit builders deliver their own tools |
+| 6. Approvals | Map where AI output waits on sign-offs, such as the gate reviews for estimates and tender approvals |
+| 7. Measure capability | Track estimate accuracy (see Wisconsin DOT and Exponent above), cycle time, and the share of staff at each training level, not just dollars saved |
+| 8. Suppliers | Structured bid forms, line-item bid comparison, and screening past tenders for bid patterns (see the US DOT audit above) |
